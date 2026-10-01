@@ -1,0 +1,1710 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#F4F7F1"><title>MODO</title><meta name="description" content="Tell MODO how you feel. It figures out how you should move, then helps you refuel from your fridge."><link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2228%22%20fill%3D%22%23A9C5A0%22%2F%3E%3Ccircle%20cx%3D%2240%22%20cy%3D%2226%22%20r%3D%2214%22%20fill%3D%22%23CDBEF5%22%2F%3E%3C%2Fsvg%3E"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap"><style>/* Layout: one phone-width column. On desktop it floats as a device on a soft sage field. */
+:root {
+  --field: #E6ECE1;      /* page ground behind the device */
+  --bg: #F4F7F1;         /* app ground, sage-tinted off-white */
+  --surface: #FFFFFF;
+  --ink: #18241C;
+  --muted: #5D6D62;
+  --line: rgba(24, 36, 28, .10);
+  --sage: #A9C5A0;
+  --sage-soft: #DCE8D6;
+  --sage-deep: #3D6B4A;
+  --lav: #CDBEF5;
+  --lav-soft: #ECE6FD;
+  --lav-deep: #6A52C4;
+  --warn: #B4541F;
+  --good: #2F7D4F;
+  --shadow: 0 1px 2px rgba(24,36,28,.06), 0 12px 32px -12px rgba(24,36,28,.22);
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r-lg: 28px; --r-md: 20px; --r-sm: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --field: #0C110E; --bg: #121915; --surface: #1A231D; --ink: #EAF1E6; --muted: #9DAEA2; --line: rgba(234,241,230,.10);
+    --sage: #6F9772; --sage-soft: #23332A; --sage-deep: #A8D3A6; --lav: #8E78DA; --lav-soft: #2A2442; --lav-deep: #CDBEF7;
+    --warn: #F0A06A; --good: #8FD3A4; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 16px 40px -16px rgba(0,0,0,.7); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --field: #0C110E; --bg: #121915; --surface: #1A231D; --ink: #EAF1E6; --muted: #9DAEA2; --line: rgba(234,241,230,.10);
+  --sage: #6F9772; --sage-soft: #23332A; --sage-deep: #A8D3A6; --lav: #8E78DA; --lav-soft: #2A2442; --lav-deep: #CDBEF7;
+  --warn: #F0A06A; --good: #8FD3A4; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 16px 40px -16px rgba(0,0,0,.7); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--field); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+button:focus-visible, input:focus-visible, label:focus-visible { outline: 3px solid var(--lav-deep); outline-offset: 2px; }
+input { font: inherit; color: inherit; }
+
+#app { height: 100%; display: flex; justify-content: center; }
+.device { position: relative; width: 100%; max-width: 440px; height: 100%; background: var(--bg); overflow: hidden; display: flex; flex-direction: column; }
+@media (min-width: 760px) {
+  #app { align-items: center; padding-block: 24px; }
+  .device { height: min(900px, calc(100% - 0px)); border-radius: 40px; box-shadow: var(--shadow), 0 0 0 10px var(--surface), 0 0 0 11px var(--line); }
+  .aside { display: block !important; }
+}
+.aside { display: none; position: fixed; left: max(24px, calc(50% - 560px)); top: 50%; transform: translateY(-50%); width: 260px; color: var(--muted); font-size: 14px; }
+.aside h2 { font-family: var(--display); font-size: 44px; line-height: .95; letter-spacing: -.03em; color: var(--ink); margin: 0 0 12px; font-weight: 800; }
+.aside p { margin: 0 0 10px; }
+.aside .k { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--sage-deep); }
+
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 20px 28px; display: flex; flex-direction: column; animation: screenIn .35s cubic-bezier(.2,.8,.2,1); scrollbar-width: none; }
+.screen::-webkit-scrollbar { display: none; }
+.screen > * { flex-shrink: 0; }
+@keyframes screenIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* top bar */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 0 8px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+.logo { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -.04em; display: flex; align-items: center; gap: 6px; }
+.logo i { width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(var(--sage), var(--lav), var(--sage)); display: inline-block; font-style: normal; }
+.iconbtn { height: 40px; min-width: 40px; padding: 0 12px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.iconbtn.on { background: var(--sage-soft); }
+.back { font-size: 20px; }
+
+/* type */
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.h-hero { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 13vw, 58px); line-height: .9; letter-spacing: -.045em; margin: 10px 0 6px; text-wrap: balance; }
+.h-hero em { font-style: normal; background: linear-gradient(90deg, var(--sage-deep), var(--lav-deep)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.h1 { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -.035em; margin: 6px 0 8px; text-wrap: balance; }
+.h2 { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; margin: 0; }
+.sub { color: var(--muted); margin: 0; }
+.small { font-size: 13px; color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* context strip */
+.ctx { display: flex; gap: 8px; overflow-x: auto; margin: 14px -20px 0; padding: 0 20px 2px; scrollbar-width: none; }
+.ctx::-webkit-scrollbar { display: none; }
+.pill { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.pill.bad { background: color-mix(in srgb, var(--warn) 14%, var(--surface)); color: var(--warn); }
+.pill.lav { background: var(--lav-soft); }
+.pill.sage { background: var(--sage-soft); }
+.tag { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: var(--lav-soft); color: var(--lav-deep); }
+
+/* moods */
+.moods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.mood { text-align: left; padding: 16px 16px 14px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 2px; min-height: 104px; transition: transform .15s, background .2s; }
+.mood:hover { transform: translateY(-2px); }
+.mood:active { transform: scale(.97); }
+.mood .e { font-size: 34px; line-height: 1; margin-bottom: 8px; }
+.mood b { font-family: var(--display); font-size: 19px; letter-spacing: -.02em; }
+.mood b { display: block; }
+.mood .ln { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.25; margin-top: 2px; }
+.mood:nth-child(4n+1), .mood:nth-child(4n+4) { background: var(--sage-soft); box-shadow: none; }
+.mood:nth-child(4n+2), .mood:nth-child(4n+3) { background: var(--lav-soft); box-shadow: none; }
+.mood.wide { grid-column: span 2; flex-direction: row; align-items: center; gap: 14px; min-height: 0; }
+.mood.wide .e { margin: 0; }
+
+.nope-btn { margin-top: 14px; width: 100%; border-radius: var(--r-lg); padding: 22px 20px; background: var(--ink); color: var(--bg); text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 12px; position: relative; overflow: hidden; }
+.nope-btn b { font-family: var(--display); font-size: 26px; line-height: 1; letter-spacing: -.03em; display: block; }
+.nope-btn span { font-size: 13px; opacity: .7; }
+.nope-btn .arrow { font-size: 28px; transition: transform .2s; }
+.nope-btn:hover .arrow { transform: translateX(4px) rotate(-8deg); }
+
+/* questions */
+.progress { display: flex; gap: 6px; margin: 4px 0 18px; }
+.progress i { flex: 1; height: 4px; border-radius: 4px; background: var(--line); }
+.progress i.on { background: var(--sage-deep); }
+.opts { display: grid; gap: 10px; }
+.opt { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); text-align: left; transition: transform .12s, box-shadow .2s, background .2s; }
+.opt:active { transform: scale(.98); }
+.opt .e { font-size: 30px; width: 40px; text-align: center; }
+.opt b { font-family: var(--display); font-size: 21px; letter-spacing: -.02em; }
+.opt.sel { background: var(--lav-soft); box-shadow: inset 0 0 0 2px var(--lav-deep); }
+.times { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.time { aspect-ratio: 1 / 1.15; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.time b { font-family: var(--display); font-size: 30px; letter-spacing: -.04em; line-height: 1; }
+.time span { font-size: 12px; color: var(--muted); }
+.time.sel { background: var(--sage-soft); box-shadow: inset 0 0 0 2px var(--sage-deep); }
+.places { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.places .opt:last-child { grid-column: span 2; }
+
+/* buttons */
+.cta { width: 100%; padding: 18px 20px; border-radius: 999px; background: var(--sage-deep); color: var(--bg); font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: .02em; text-transform: uppercase; transition: transform .12s, opacity .2s; }
+.cta:active { transform: scale(.98); }
+.cta:disabled { opacity: .35; cursor: default; }
+.cta.lav { background: var(--lav-deep); }
+.ghost { width: 100%; padding: 14px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); font-weight: 600; background: transparent; }
+.linkbtn { color: var(--lav-deep); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.foot { margin-top: auto; padding-top: 18px; display: grid; gap: 10px; }
+
+/* swipe deck */
+.deck { position: relative; flex: 1 0 auto; min-height: 420px; max-height: 540px; margin: 10px 0 14px; }
+.card { position: absolute; inset: 0; border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; box-shadow: var(--shadow); overflow: hidden; }
+.card.c0 { background: linear-gradient(160deg, var(--sage-soft), var(--surface) 70%); }
+.card.c1 { background: linear-gradient(160deg, var(--lav-soft), var(--surface) 70%); }
+.card .big-e { font-size: 104px; line-height: 1; margin: 18px 0 auto 4px; filter: drop-shadow(0 8px 14px rgba(0,0,0,.12)); }
+.card h3 { font-family: var(--display); font-weight: 800; font-size: 36px; line-height: .95; letter-spacing: -.04em; margin: 14px 0 8px; text-wrap: balance; }
+.card p { margin: 0 0 16px; color: var(--muted); }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.stat { padding: 8px 12px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.effort { display: inline-flex; gap: 2px; }
+.effort i { width: 4px; height: 12px; border-radius: 2px; background: var(--line); }
+.effort i.on { background: var(--ink); }
+.stamp { position: absolute; top: 26px; padding: 6px 14px; border-radius: 12px; font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: -.01em; border: 3px solid; opacity: 0; pointer-events: none; }
+.stamp.yes { left: 22px; color: var(--sage-deep); border-color: var(--sage-deep); transform: rotate(-10deg); }
+.stamp.no { right: 22px; color: var(--warn); border-color: var(--warn); transform: rotate(10deg); }
+.card.under { transform: scale(.94) translateY(14px); opacity: .7; }
+.card.under2 { transform: scale(.88) translateY(28px); opacity: .4; }
+.swipe-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sa { padding: 16px 10px; border-radius: 999px; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s; }
+.sa:active { transform: scale(.96); }
+.sa.no { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.sa.yes { background: var(--ink); color: var(--bg); }
+.hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-sm); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 13.5px; }
+.note.lav { background: var(--lav-soft); box-shadow: none; }
+.note.sage { background: var(--sage-soft); box-shadow: none; }
+
+/* reveal */
+.reveal-card { border-radius: var(--r-lg); padding: 22px; background: linear-gradient(170deg, var(--sage-soft), var(--lav-soft)); position: relative; overflow: hidden; }
+.reveal-card h2 { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: .95; letter-spacing: -.04em; margin: 8px 0 10px; }
+.why { font-size: 14.5px; }
+.why b { font-weight: 700; }
+.plan { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 2px; }
+.plan li { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; padding: 12px 14px; background: var(--surface); }
+.plan li:first-child { border-radius: 16px 16px 4px 4px; }
+.plan li:last-child { border-radius: 4px 4px 16px 16px; }
+.plan li .m { font-family: var(--mono); font-size: 13px; color: var(--sage-deep); font-weight: 500; }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.trio div { background: var(--surface); border-radius: 16px; padding: 12px; text-align: center; }
+.trio b { display: block; font-family: var(--display); font-size: 24px; letter-spacing: -.03em; line-height: 1.1; }
+.trio span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-family: var(--mono); }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+
+/* session */
+.ring { position: relative; width: min(280px, 72vw); aspect-ratio: 1; margin: 12px auto 8px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+.ring .t { font-family: var(--mono); font-size: 52px; font-weight: 500; letter-spacing: -.04em; line-height: 1; }
+.step-now { text-align: center; }
+.step-now b { font-family: var(--display); font-size: 26px; letter-spacing: -.03em; line-height: 1.05; display: block; text-wrap: balance; }
+.steps-mini { display: flex; gap: 4px; margin: 16px 0; }
+.steps-mini i { height: 6px; border-radius: 6px; background: var(--line); position: relative; overflow: hidden; }
+.steps-mini i span { position: absolute; inset: 0; background: var(--sage-deep); transform-origin: left; }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+.toggle { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.switch { width: 38px; height: 22px; border-radius: 22px; background: var(--line); position: relative; transition: background .2s; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .2s; }
+.switch.on { background: var(--sage-deep); }
+.switch.on::after { transform: translateX(16px); }
+
+/* after */
+.shift { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 64px; margin: 18px 0 6px; }
+.shift .arr { font-size: 28px; color: var(--muted); }
+.moods.compact .mood { min-height: 0; padding: 12px; flex-direction: row; align-items: center; gap: 10px; }
+.moods.compact .mood .e { font-size: 26px; margin: 0; }
+.moods.compact .mood b { font-size: 16px; }
+.afters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.afters .opt { flex-direction: column; gap: 4px; padding: 14px 6px; text-align: center; }
+.afters .opt b { font-size: 15px; }
+.bignum { font-family: var(--display); font-weight: 800; font-size: 40px; letter-spacing: -.04em; line-height: 1; }
+
+/* refuel */
+.fridge-wrap { position: relative; border-radius: var(--r-lg); overflow: hidden; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); aspect-ratio: 4 / 3.4; }
+.fridge-wrap img, .fridge-wrap svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scanline { position: absolute; left: 0; right: 0; height: 70px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--lav) 55%, transparent), transparent); border-bottom: 2px solid var(--lav-deep); animation: scan 1.6s ease-in-out infinite alternate; }
+@keyframes scan { from { top: -70px; } to { top: 100%; } }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; font-weight: 600; animation: pop .3s cubic-bezier(.3,1.6,.5,1) both; }
+.chip.on { background: var(--sage-soft); box-shadow: inset 0 0 0 1.5px var(--sage-deep); }
+.chip .x { opacity: .5; font-size: 12px; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.textin { display: flex; gap: 8px; }
+.textin input { flex: 1; min-width: 0; padding: 14px 16px; border-radius: 999px; border: 0; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.textin button { padding: 0 18px; border-radius: 999px; background: var(--ink); color: var(--bg); font-weight: 700; }
+.scan-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.scan-opt { position: relative; padding: 18px 16px; border-radius: var(--r-md); text-align: left; display: flex; flex-direction: column; gap: 4px; min-height: 120px; }
+.scan-opt .e { font-size: 30px; margin-bottom: auto; }
+.scan-opt b { font-family: var(--display); font-size: 18px; letter-spacing: -.02em; line-height: 1.05; }
+.scan-opt span { font-size: 12px; color: var(--muted); }
+.scan-opt.a { background: var(--ink); color: var(--bg); }
+.scan-opt.a span { color: color-mix(in srgb, var(--bg) 70%, transparent); }
+.scan-opt.b { background: var(--lav-soft); }
+.scan-opt input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.window { border-radius: var(--r-md); padding: 16px 18px; background: var(--ink); color: var(--bg); display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.window .small { color: color-mix(in srgb, var(--bg) 65%, transparent); }
+.window .switch { background: color-mix(in srgb, var(--bg) 28%, transparent); }
+.window .switch.on { background: var(--lav); }
+.window .bignum { color: var(--bg); font-size: 30px; }
+.recipe { border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
+.recipe > button { width: 100%; text-align: left; padding: 16px; display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: center; }
+.recipe .re { font-size: 34px; text-align: center; }
+.recipe h4 { margin: 0; font-family: var(--display); font-size: 18px; letter-spacing: -.02em; line-height: 1.1; }
+.recipe .meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.recipe .fit { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 6px; }
+.fit.y { background: var(--sage-soft); color: var(--sage-deep); }
+.fit.n { background: var(--lav-soft); color: var(--lav-deep); }
+.recipe .body { padding: 0 16px 16px 76px; font-size: 14px; }
+.recipe ol { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.recipe.special { box-shadow: inset 0 0 0 2px var(--lav-deep); background: var(--lav-soft); }
+.form { display: grid; gap: 14px; }
+.field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button { flex: 1; padding: 11px 8px; border-radius: 12px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.seg button.sel { background: var(--sage-soft); box-shadow: inset 0 0 0 2px var(--sage-deep); }
+.num { display: flex; align-items: center; gap: 10px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); border-radius: 12px; padding: 4px; }
+.num button { width: 40px; height: 40px; border-radius: 10px; background: var(--bg); font-size: 20px; font-weight: 700; }
+.num output { flex: 1; text-align: center; font-family: var(--mono); font-size: 18px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* trick */
+.trick-screen { background: var(--ink); color: var(--bg); }
+.trick-screen .bar { background: var(--ink); }
+.trick-screen .iconbtn { background: color-mix(in srgb, var(--bg) 10%, transparent); box-shadow: none; color: var(--bg); }
+.trick-screen .sub, .trick-screen .small { color: color-mix(in srgb, var(--bg) 65%, transparent); }
+.trick-card { border-radius: var(--r-lg); padding: 26px 22px; background: var(--lav); color: #17121F; margin-top: 18px; position: relative; animation: tilt .5s cubic-bezier(.3,1.5,.5,1); }
+.trick-card:nth-child(odd) { background: var(--sage); }
+@keyframes tilt { from { transform: rotate(-4deg) scale(.9); opacity: 0; } to { transform: none; opacity: 1; } }
+.trick-card .e { font-size: 64px; line-height: 1; }
+.trick-card h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1; letter-spacing: -.035em; margin: 14px 0 8px; text-wrap: balance; }
+.trick-card p { margin: 0; opacity: .75; }
+.trick-card .m { position: absolute; top: 22px; right: 22px; font-family: var(--mono); font-size: 13px; background: rgba(255,255,255,.55); padding: 4px 9px; border-radius: 999px; color: #17121F; }
+.trick-screen .cta { background: var(--bg); color: var(--ink); }
+.trick-screen .ghost { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bg) 25%, transparent); color: var(--bg); }
+.photo-proof { border-radius: var(--r-md); overflow: hidden; margin-top: 12px; }
+.photo-proof img { display: block; width: 100%; max-height: 260px; object-fit: cover; }
+
+/* me */
+.taste { display: grid; gap: 10px; }
+.taste .grp { border-radius: var(--r-md); padding: 14px 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.taste .grp .eyebrow { margin-bottom: 6px; display: block; }
+.taste .grp b { font-family: var(--display); font-size: 20px; letter-spacing: -.02em; line-height: 1.15; display: block; }
+.taste .grp.hate { background: color-mix(in srgb, var(--warn) 9%, var(--surface)); }
+.taste .grp.like { background: var(--sage-soft); box-shadow: none; }
+.taste .grp.secret { background: var(--lav-soft); box-shadow: none; }
+.hist { display: grid; gap: 8px; }
+.hist div { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; }
+.hist .em { font-size: 20px; letter-spacing: 2px; }
+.section { margin-top: 24px; display: grid; gap: 10px; }
+
+/* sheet */
+.scrim { position: absolute; inset: 0; background: rgba(10,16,12,.38); z-index: 20; animation: fade .2s; }
+@keyframes fade { from { opacity: 0; } }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--bg); border-radius: 28px 28px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom, 0px)); max-height: 88%; overflow-y: auto; animation: up .3s cubic-bezier(.2,.8,.2,1); }
+@keyframes up { from { transform: translateY(100%); } }
+.sheet .grab { width: 40px; height: 5px; border-radius: 5px; background: var(--line); margin: 0 auto 14px; }
+.list { display: grid; gap: 8px; }
+.li { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); text-align: left; font-weight: 600; }
+.li .e { font-size: 22px; }
+.li .r { margin-left: auto; font-size: 13px; color: var(--muted); font-weight: 500; }
+.li.sel { box-shadow: inset 0 0 0 2px var(--sage-deep); background: var(--sage-soft); }
+.readings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.readings div { padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.readings b { font-family: var(--display); font-size: 24px; letter-spacing: -.03em; display: block; }
+.readings span { font-size: 12px; color: var(--muted); }
+.spinner { width: 46px; height: 46px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--lav-deep); animation: spin .8s linear infinite; margin: 20px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; z-index: 30; pointer-events: none; animation: toast 2.4s forwards; white-space: nowrap; }
+@keyframes toast { 0% { opacity: 0; transform: translate(-50%, 10px); } 10%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
+
+.stack { display: grid; gap: 12px; }
+.mt { margin-top: 16px; } .mt-s { margin-top: 8px; } .mt-l { margin-top: 26px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+@media (max-width: 360px) {
+  .h-hero { font-size: 40px; }
+  .times { grid-template-columns: repeat(2, 1fr); }
+  .time { aspect-ratio: 2 / 1; }
+}
+
+.card .fitline { font-size: 12.5px; font-weight: 600; color: var(--sage-deep); margin: 0 0 6px; font-family: var(--mono); letter-spacing: .02em; }
+.notes { display: grid; gap: 6px; }
+.plan-live { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 6px; }
+.plan-live li { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; font-size: 14px; color: var(--muted); padding: 10px 14px; border-radius: 14px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.plan-live li.now { color: var(--ink); font-weight: 700; box-shadow: inset 0 0 0 2px var(--sage-deep); }
+.plan-live li.done { text-decoration: line-through; opacity: .55; }
+.plan-live .m { font-family: var(--mono); font-size: 12px; }
+
+.foot.sticky { position: sticky; bottom: 0; padding-bottom: 6px; background: linear-gradient(to bottom, transparent, var(--bg) 35%); }
+</style></head><body><div id="app"></div><script>!function(e,n){"object"==typeof exports&&"undefined"!=typeof module?n(exports):"function"==typeof define&&define.amd?define(["exports"],n):n(e.htmPreact={})}(this,function(e){var n,_,t,o,r,u,l,i={},c=[],f=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i;function s(e,n){for(var _ in n)e[_]=n[_];return e}function a(e){var n=e.parentNode;n&&n.removeChild(e)}function p(e,_,t){var o,r,u,l={};for(u in _)"key"==u?o=_[u]:"ref"==u?r=_[u]:l[u]=_[u];if(arguments.length>2&&(l.children=arguments.length>3?n.call(arguments,2):t),"function"==typeof e&&null!=e.defaultProps)for(u in e.defaultProps)void 0===l[u]&&(l[u]=e.defaultProps[u]);return h(e,l,o,r,null)}function h(e,n,o,r,u){var l={type:e,props:n,key:o,ref:r,__k:null,__:null,__b:0,__e:null,__d:void 0,__c:null,__h:null,constructor:void 0,__v:null==u?++t:u};return null!=_.vnode&&_.vnode(l),l}function d(e){return e.children}function v(e,n){this.props=e,this.context=n}function y(e,n){if(null==n)return e.__?y(e.__,e.__.__k.indexOf(e)+1):null;for(var _;n<e.__k.length;n++)if(null!=(_=e.__k[n])&&null!=_.__e)return _.__e;return"function"==typeof e.type?y(e):null}function m(e){var n,_;if(null!=(e=e.__)&&null!=e.__c){for(e.__e=e.__c.base=null,n=0;n<e.__k.length;n++)if(null!=(_=e.__k[n])&&null!=_.__e){e.__e=e.__c.base=_.__e;break}return m(e)}}function g(e){(!e.__d&&(e.__d=!0)&&o.push(e)&&!k.__r++||u!==_.debounceRendering)&&((u=_.debounceRendering)||r)(k)}function k(){for(var e;k.__r=o.length;)e=o.sort(function(e,n){return e.__v.__b-n.__v.__b}),o=[],e.some(function(e){var n,_,t,o,r,u;e.__d&&(r=(o=(n=e).__v).__e,(u=n.__P)&&(_=[],(t=s({},o)).__v=o.__v+1,D(u,o,t,n.__n,void 0!==u.ownerSVGElement,null!=o.__h?[r]:null,_,null==r?y(o):r,o.__h),w(_,o),o.__e!=r&&m(o)))})}function b(e,n,_,t,o,r,u,l,f,s){var a,p,v,m,g,k,b,H=t&&t.__k||c,E=H.length;for(_.__k=[],a=0;a<n.length;a++)if(null!=(m=_.__k[a]=null==(m=n[a])||"boolean"==typeof m?null:"string"==typeof m||"number"==typeof m||"bigint"==typeof m?h(null,m,null,null,m):Array.isArray(m)?h(d,{children:m},null,null,null):m.__b>0?h(m.type,m.props,m.key,null,m.__v):m)){if(m.__=_,m.__b=_.__b+1,null===(v=H[a])||v&&m.key==v.key&&m.type===v.type)H[a]=void 0;else for(p=0;p<E;p++){if((v=H[p])&&m.key==v.key&&m.type===v.type){H[p]=void 0;break}v=null}D(e,m,v=v||i,o,r,u,l,f,s),g=m.__e,(p=m.ref)&&v.ref!=p&&(b||(b=[]),v.ref&&b.push(v.ref,null,m),b.push(p,m.__c||g,m)),null!=g?(null==k&&(k=g),"function"==typeof m.type&&null!=m.__k&&m.__k===v.__k?m.__d=f=C(m,f,e):f=x(e,m,v,H,g,f),s||"option"!==_.type?"function"==typeof _.type&&(_.__d=f):e.value=""):f&&v.__e==f&&f.parentNode!=e&&(f=y(v))}for(_.__e=k,a=E;a--;)null!=H[a]&&("function"==typeof _.type&&null!=H[a].__e&&H[a].__e==_.__d&&(_.__d=y(t,a+1)),A(H[a],H[a]));if(b)for(a=0;a<b.length;a++)U(b[a],b[++a],b[++a])}function C(e,n,_){var t,o;for(t=0;t<e.__k.length;t++)(o=e.__k[t])&&(o.__=e,n="function"==typeof o.type?C(o,n,_):x(_,o,o,e.__k,o.__e,n));return n}function x(e,n,_,t,o,r){var u,l,i;if(void 0!==n.__d)u=n.__d,n.__d=void 0;else if(null==_||o!=r||null==o.parentNode)e:if(null==r||r.parentNode!==e)e.appendChild(o),u=null;else{for(l=r,i=0;(l=l.nextSibling)&&i<t.length;i+=2)if(l==o)break e;e.insertBefore(o,r),u=r}return void 0!==u?u:o.nextSibling}function H(e,n,_){"-"===n[0]?e.setProperty(n,_):e[n]=null==_?"":"number"!=typeof _||f.test(n)?_:_+"px"}function E(e,n,_,t,o){var r;e:if("style"===n)if("string"==typeof _)e.style.cssText=_;else{if("string"==typeof t&&(e.style.cssText=t=""),t)for(n in t)_&&n in _||H(e.style,n,"");if(_)for(n in _)t&&_[n]===t[n]||H(e.style,n,_[n])}else if("o"===n[0]&&"n"===n[1])r=n!==(n=n.replace(/Capture$/,"")),n=n.toLowerCase()in e?n.toLowerCase().slice(2):n.slice(2),e.l||(e.l={}),e.l[n+r]=_,_?t||e.addEventListener(n,r?S:P,r):e.removeEventListener(n,r?S:P,r);else if("dangerouslySetInnerHTML"!==n){if(o)n=n.replace(/xlink[H:h]/,"h").replace(/sName$/,"s");else if("href"!==n&&"list"!==n&&"form"!==n&&"tabIndex"!==n&&"download"!==n&&n in e)try{e[n]=null==_?"":_;break e}catch(e){}"function"==typeof _||(null!=_&&(!1!==_||"a"===n[0]&&"r"===n[1])?e.setAttribute(n,_):e.removeAttribute(n))}}function P(e){this.l[e.type+!1](_.event?_.event(e):e)}function S(e){this.l[e.type+!0](_.event?_.event(e):e)}function D(e,n,t,o,r,u,l,i,c){var f,a,p,h,y,m,g,k,C,x,H,E=n.type;if(void 0!==n.constructor)return null;null!=t.__h&&(c=t.__h,i=n.__e=t.__e,n.__h=null,u=[i]),(f=_.__b)&&f(n);try{e:if("function"==typeof E){if(k=n.props,C=(f=E.contextType)&&o[f.__c],x=f?C?C.props.value:f.__:o,t.__c?g=(a=n.__c=t.__c).__=a.__E:("prototype"in E&&E.prototype.render?n.__c=a=new E(k,x):(n.__c=a=new v(k,x),a.constructor=E,a.render=M),C&&C.sub(a),a.props=k,a.state||(a.state={}),a.context=x,a.__n=o,p=a.__d=!0,a.__h=[]),null==a.__s&&(a.__s=a.state),null!=E.getDerivedStateFromProps&&(a.__s==a.state&&(a.__s=s({},a.__s)),s(a.__s,E.getDerivedStateFromProps(k,a.__s))),h=a.props,y=a.state,p)null==E.getDerivedStateFromProps&&null!=a.componentWillMount&&a.componentWillMount(),null!=a.componentDidMount&&a.__h.push(a.componentDidMount);else{if(null==E.getDerivedStateFromProps&&k!==h&&null!=a.componentWillReceiveProps&&a.componentWillReceiveProps(k,x),!a.__e&&null!=a.shouldComponentUpdate&&!1===a.shouldComponentUpdate(k,a.__s,x)||n.__v===t.__v){a.props=k,a.state=a.__s,n.__v!==t.__v&&(a.__d=!1),a.__v=n,n.__e=t.__e,n.__k=t.__k,n.__k.forEach(function(e){e&&(e.__=n)}),a.__h.length&&l.push(a);break e}null!=a.componentWillUpdate&&a.componentWillUpdate(k,a.__s,x),null!=a.componentDidUpdate&&a.__h.push(function(){a.componentDidUpdate(h,y,m)})}a.context=x,a.props=k,a.state=a.__s,(f=_.__r)&&f(n),a.__d=!1,a.__v=n,a.__P=e,f=a.render(a.props,a.state,a.context),a.state=a.__s,null!=a.getChildContext&&(o=s(s({},o),a.getChildContext())),p||null==a.getSnapshotBeforeUpdate||(m=a.getSnapshotBeforeUpdate(h,y)),H=null!=f&&f.type===d&&null==f.key?f.props.children:f,b(e,Array.isArray(H)?H:[H],n,t,o,r,u,l,i,c),a.base=n.__e,n.__h=null,a.__h.length&&l.push(a),g&&(a.__E=a.__=null),a.__e=!1}else null==u&&n.__v===t.__v?(n.__k=t.__k,n.__e=t.__e):n.__e=T(t.__e,n,t,o,r,u,l,c);(f=_.diffed)&&f(n)}catch(e){n.__v=null,(c||null!=u)&&(n.__e=i,n.__h=!!c,u[u.indexOf(i)]=null),_.__e(e,n,t)}}function w(e,n){_.__c&&_.__c(n,e),e.some(function(n){try{e=n.__h,n.__h=[],e.some(function(e){e.call(n)})}catch(e){_.__e(e,n.__v)}})}function T(e,_,t,o,r,u,l,c){var f,s,p,h=t.props,d=_.props,v=_.type,m=0;if("svg"===v&&(r=!0),null!=u)for(;m<u.length;m++)if((f=u[m])&&(f===e||(v?f.localName==v:3==f.nodeType))){e=f,u[m]=null;break}if(null==e){if(null===v)return document.createTextNode(d);e=r?document.createElementNS("http://www.w3.org/2000/svg",v):document.createElement(v,d.is&&d),u=null,c=!1}if(null===v)h===d||c&&e.data===d||(e.data=d);else{if(u=u&&n.call(e.childNodes),s=(h=t.props||i).dangerouslySetInnerHTML,p=d.dangerouslySetInnerHTML,!c){if(null!=u)for(h={},m=0;m<e.attributes.length;m++)h[e.attributes[m].name]=e.attributes[m].value;(p||s)&&(p&&(s&&p.__html==s.__html||p.__html===e.innerHTML)||(e.innerHTML=p&&p.__html||""))}if(function(e,n,_,t,o){var r;for(r in _)"children"===r||"key"===r||r in n||E(e,r,null,_[r],t);for(r in n)o&&"function"!=typeof n[r]||"children"===r||"key"===r||"value"===r||"checked"===r||_[r]===n[r]||E(e,r,n[r],_[r],t)}(e,d,h,r,c),p)_.__k=[];else if(m=_.props.children,b(e,Array.isArray(m)?m:[m],_,t,o,r&&"foreignObject"!==v,u,l,u?u[0]:t.__k&&y(t,0),c),null!=u)for(m=u.length;m--;)null!=u[m]&&a(u[m]);c||("value"in d&&void 0!==(m=d.value)&&(m!==e.value||"progress"===v&&!m)&&E(e,"value",m,h.value,!1),"checked"in d&&void 0!==(m=d.checked)&&m!==e.checked&&E(e,"checked",m,h.checked,!1))}return e}function U(e,n,t){try{"function"==typeof e?e(n):e.current=n}catch(e){_.__e(e,t)}}function A(e,n,t){var o,r;if(_.unmount&&_.unmount(e),(o=e.ref)&&(o.current&&o.current!==e.__e||U(o,null,n)),null!=(o=e.__c)){if(o.componentWillUnmount)try{o.componentWillUnmount()}catch(e){_.__e(e,n)}o.base=o.__P=null}if(o=e.__k)for(r=0;r<o.length;r++)o[r]&&A(o[r],n,"function"!=typeof e.type);t||null==e.__e||a(e.__e),e.__e=e.__d=void 0}function M(e,n,_){return this.constructor(e,_)}n=c.slice,_={__e:function(e,n){for(var _,t,o;n=n.__;)if((_=n.__c)&&!_.__)try{if((t=_.constructor)&&null!=t.getDerivedStateFromError&&(_.setState(t.getDerivedStateFromError(e)),o=_.__d),null!=_.componentDidCatch&&(_.componentDidCatch(e),o=_.__d),o)return _.__E=_}catch(n){e=n}throw e}},t=0,v.prototype.setState=function(e,n){var _;_=null!=this.__s&&this.__s!==this.state?this.__s:this.__s=s({},this.state),"function"==typeof e&&(e=e(s({},_),this.props)),e&&s(_,e),null!=e&&this.__v&&(n&&this.__h.push(n),g(this))},v.prototype.forceUpdate=function(e){this.__v&&(this.__e=!0,e&&this.__h.push(e),g(this))},v.prototype.render=d,o=[],r="function"==typeof Promise?Promise.prototype.then.bind(Promise.resolve()):setTimeout,k.__r=0,l=0;var F,L,N,W=0,R=[],I=_.__b,O=_.__r,V=_.diffed,q=_.__c,B=_.unmount;function $(e,n){_.__h&&_.__h(L,e,W||n),W=0;var t=L.__H||(L.__H={__:[],__h:[]});return e>=t.__.length&&t.__.push({}),t.__[e]}function j(e){return W=1,G(ee,e)}function G(e,n,_){var t=$(F++,2);return t.t=e,t.__c||(t.__=[_?_(n):ee(void 0,n),function(e){var n=t.t(t.__[0],e);t.__[0]!==n&&(t.__=[n,t.__[1]],t.__c.setState({}))}],t.__c=L),t.__}function z(e,n){var t=$(F++,4);!_.__s&&Z(t.__H,n)&&(t.__=e,t.__H=n,L.__h.push(t))}function J(e,n){var _=$(F++,7);return Z(_.__H,n)&&(_.__=e(),_.__H=n,_.__h=e),_.__}function K(){R.forEach(function(e){if(e.__P)try{e.__H.__h.forEach(X),e.__H.__h.forEach(Y),e.__H.__h=[]}catch(n){e.__H.__h=[],_.__e(n,e.__v)}}),R=[]}_.__b=function(e){L=null,I&&I(e)},_.__r=function(e){O&&O(e),F=0;var n=(L=e.__c).__H;n&&(n.__h.forEach(X),n.__h.forEach(Y),n.__h=[])},_.diffed=function(e){V&&V(e);var n=e.__c;n&&n.__H&&n.__H.__h.length&&(1!==R.push(n)&&N===_.requestAnimationFrame||((N=_.requestAnimationFrame)||function(e){var n,_=function(){clearTimeout(t),Q&&cancelAnimationFrame(n),setTimeout(e)},t=setTimeout(_,100);Q&&(n=requestAnimationFrame(_))})(K)),L=void 0},_.__c=function(e,n){n.some(function(e){try{e.__h.forEach(X),e.__h=e.__h.filter(function(e){return!e.__||Y(e)})}catch(t){n.some(function(e){e.__h&&(e.__h=[])}),n=[],_.__e(t,e.__v)}}),q&&q(e,n)},_.unmount=function(e){B&&B(e);var n=e.__c;if(n&&n.__H)try{n.__H.__.forEach(X)}catch(e){_.__e(e,n.__v)}};var Q="function"==typeof requestAnimationFrame;function X(e){var n=L;"function"==typeof e.__c&&e.__c(),L=n}function Y(e){var n=L;e.__c=e.__(),L=n}function Z(e,n){return!e||e.length!==n.length||n.some(function(n,_){return n!==e[_]})}function ee(e,n){return"function"==typeof n?n(e):n}var ne=function(e,n,_,t){var o;n[0]=0;for(var r=1;r<n.length;r++){var u=n[r++],l=n[r]?(n[0]|=u?1:2,_[n[r++]]):n[++r];3===u?t[0]=l:4===u?t[1]=Object.assign(t[1]||{},l):5===u?(t[1]=t[1]||{})[n[++r]]=l:6===u?t[1][n[++r]]+=l+"":u?(o=e.apply(l,ne(e,l,_,["",null])),t.push(o),l[0]?n[0]|=2:(n[r-2]=0,n[r]=o)):t.push(l)}return t},_e=new Map,te=function(e){var n=_e.get(this);return n||(n=new Map,_e.set(this,n)),(n=ne(this,n.get(e)||(n.set(e,n=function(e){for(var n,_,t=1,o="",r="",u=[0],l=function(e){1===t&&(e||(o=o.replace(/^\s*\n\s*|\s*\n\s*$/g,"")))?u.push(0,e,o):3===t&&(e||o)?(u.push(3,e,o),t=2):2===t&&"..."===o&&e?u.push(4,e,0):2===t&&o&&!e?u.push(5,0,!0,o):t>=5&&((o||!e&&5===t)&&(u.push(t,0,o,_),t=6),e&&(u.push(t,e,0,_),t=6)),o=""},i=0;i<e.length;i++){i&&(1===t&&l(),l(i));for(var c=0;c<e[i].length;c++)n=e[i][c],1===t?"<"===n?(l(),u=[u],t=3):o+=n:4===t?"--"===o&&">"===n?(t=1,o=""):o=n+o[0]:r?n===r?r="":o+=n:'"'===n||"'"===n?r=n:">"===n?(l(),t=1):t&&("="===n?(t=5,_=o,o=""):"/"===n&&(t<5||">"===e[i][c+1])?(l(),3===t&&(u=u[0]),t=u,(u=u[0]).push(2,0,t),t=0):" "===n||"\t"===n||"\n"===n||"\r"===n?(l(),t=2):o+=n),3===t&&"!--"===o&&(t=4,u=u[0])}return l(),u}(e)),n),arguments,[])).length>1?n:n[0]}.bind(p);e.h=p,e.html=te,e.render=function(e,t,o){var r,u,l;_.__&&_.__(e,t),u=(r="function"==typeof o)?null:o&&o.__k||t.__k,l=[],D(t,e=(!r&&o||t).__k=p(d,null,[e]),u||i,i,void 0!==t.ownerSVGElement,!r&&o?[o]:u?null:t.firstChild?n.call(t.childNodes):null,l,!r&&o?o:u?u.__e:t.firstChild,r),w(l,e)},e.Component=v,e.createContext=function(e,n){var _={__c:n="__cC"+l++,__:e,Consumer:function(e,n){return e.children(n)},Provider:function(e){var _,t;return this.getChildContext||(_=[],(t={})[n]=this,this.getChildContext=function(){return t},this.shouldComponentUpdate=function(e){this.props.value!==e.value&&_.some(g)},this.sub=function(e){_.push(e);var n=e.componentWillUnmount;e.componentWillUnmount=function(){_.splice(_.indexOf(e),1),n&&n.call(e)}}),e.children}};return _.Provider.__=_.Consumer.contextType=_},e.useState=j,e.useReducer=G,e.useEffect=function(e,n){var t=$(F++,3);!_.__s&&Z(t.__H,n)&&(t.__=e,t.__H=n,L.__H.__h.push(t))},e.useLayoutEffect=z,e.useRef=function(e){return W=5,J(function(){return{current:e}},[])},e.useImperativeHandle=function(e,n,_){W=6,z(function(){"function"==typeof e?e(n()):e&&(e.current=n())},null==_?_:_.concat(e))},e.useMemo=J,e.useCallback=function(e,n){return W=8,J(function(){return e},n)},e.useContext=function(e){var n=L.context[e.__c],_=$(F++,9);return _.c=e,n?(null==_.__&&(_.__=!0,n.sub(L)),n.props.value):e.__},e.useDebugValue=function(e,n){_.useDebugValue&&_.useDebugValue(n?n(e):e)},e.useErrorBoundary=function(e){var n=$(F++,10),_=j();return n.__=e,L.componentDidCatch||(L.componentDidCatch=function(e){n.__&&n.__(e),_[1](e)}),[_[0],function(){_[1](void 0)}]}});
+</script><script>/* MODO — content library. Everything a person can be matched with lives here. */
+
+const MOODS = [
+  { id: 'dead',        emoji: '😴', label: 'Dead',            line: 'Running on fumes' },
+  { id: 'meh',         emoji: '😐', label: 'Meh',             line: 'Nothing’s wrong. Nothing’s right.' },
+  { id: 'restless',    emoji: '😤', label: 'Restless',        line: 'Need to get something out' },
+  { id: 'overwhelmed', emoji: '🫠', label: 'Overwhelmed',     line: 'Too many tabs open' },
+  { id: 'energized',   emoji: '⚡', label: 'Energized',       line: 'Let’s use it' },
+  { id: 'low',         emoji: '😔', label: 'Low',             line: 'A bit heavy today' },
+  { id: 'move',        emoji: '🤸', label: 'I need to move',  line: 'Body says go' },
+];
+
+const SUFFERING = [
+  { id: 'none',   emoji: '🛋️', label: 'None',                target: 2 },
+  { id: 'little', emoji: '🙂', label: 'A little',            target: 5 },
+  { id: 'regret', emoji: '😈', label: 'Make me regret this', target: 8 },
+];
+
+const TIMES = [
+  { id: 5,  label: '5', unit: 'min' },
+  { id: 15, label: '15', unit: 'min' },
+  { id: 30, label: '30', unit: 'min' },
+  { id: 60, label: '60+', unit: 'min' },
+];
+
+const PLACES = [
+  { id: 'home',     emoji: '🏠', label: 'Home' },
+  { id: 'outside',  emoji: '🌳', label: 'Outside' },
+  { id: 'gym',      emoji: '🏋️', label: 'Gym' },
+  { id: 'court',    emoji: '🏀', label: 'Court' },
+  { id: 'anywhere', emoji: '🤷', label: 'Anywhere' },
+];
+
+/* Category labels power the "MODO knows you" profile. */
+const CATS = {
+  walk: 'walking', run: 'running', ball: 'ball games', strength: 'strength training',
+  hiit: 'short sweaty workouts', yoga: 'yoga', stretch: 'stretching', boxing: 'hitting things',
+  dance: 'dancing', cycle: 'cycling', swim: 'swimming',
+};
+
+/* phases: [label, share of the session]. A plan is built by scaling these to the chosen time. */
+const ACTIVITIES = [
+  { id: 'bball', title: 'Basketball chaos', tagline: 'Shoot, sprint, repeat. No scoreboard.', cat: 'ball', emoji: '🏀',
+    moods: ['restless', 'energized', 'move'], effort: 7, min: 15, max: 60, places: ['court', 'outside'], outdoor: true, competitive: true, after: '😌',
+    phases: [['Walk to the court', .15], ['Shoot around, find your rhythm', .25], ['Full-court runs + a game of 21', .35], ['Free throws to cool down', .1], ['Walk home', .15]] },
+  { id: 'angrywalk', title: 'Angry walk', tagline: 'Loud music. Fast feet. Zero small talk.', cat: 'walk', emoji: '🎧',
+    moods: ['restless', 'overwhelmed', 'low'], effort: 4, min: 10, max: 45, places: ['outside', 'anywhere'], outdoor: true, after: '😮‍💨',
+    phases: [['Pick the angriest playlist you own', .05], ['Walk fast, no destination', .6], ['Slow it down, unclench the jaw', .25], ['Stand still. Three long breaths.', .1]] },
+  { id: 'run', title: 'The honest run', tagline: 'Just you, a road, and your lungs.', cat: 'run', emoji: '🏃',
+    moods: ['energized', 'restless', 'move'], effort: 8, min: 20, max: 60, places: ['outside', 'gym'], outdoor: true, after: '🥵',
+    phases: [['Brisk walk to warm up', .15], ['Easy jog', .3], ['Push the middle stretch', .35], ['Jog it out', .1], ['Walk + stretch calves', .1]] },
+  { id: 'neverbeen', title: 'Walk somewhere you’ve never been', tagline: 'Turn left where you’d usually turn right.', cat: 'walk', emoji: '🧭',
+    moods: ['meh', 'low', 'overwhelmed', 'dead'], effort: 2, min: 10, max: 45, places: ['outside', 'anywhere'], outdoor: true, after: '🙂',
+    phases: [['Pick a direction you never take', .1], ['Wander. Phone in pocket.', .7], ['Find your way back', .2]] },
+  { id: 'floor7', title: '7-minute floor workout', tagline: 'Short, rude, effective.', cat: 'hiit', emoji: '🔥',
+    moods: ['energized', 'move', 'meh', 'restless'], effort: 7, min: 5, max: 12, places: ['home', 'gym', 'anywhere'], after: '😤',
+    phases: [['Jumping jacks', .15], ['Squats', .15], ['Push-ups (knees allowed)', .15], ['Plank', .15], ['Lunges', .15], ['Mountain climbers', .15], ['Lie on the floor, victorious', .1]] },
+  { id: 'shadowbox', title: 'Shadowboxing rounds', tagline: 'Punch the air. The air deserved it.', cat: 'boxing', emoji: '🥊',
+    moods: ['restless', 'overwhelmed', 'energized'], effort: 7, min: 10, max: 30, places: ['home', 'gym', 'anywhere'], after: '😌',
+    phases: [['Shoulder rolls + bounce on your toes', .15], ['Round 1: jab, cross, repeat', .2], ['Round 2: add hooks', .2], ['Round 3: everything, fast', .2], ['Slow breathing, arms loose', .25]] },
+  { id: 'kitchendance', title: 'Kitchen dance party', tagline: 'Three songs. Questionable moves.', cat: 'dance', emoji: '💃',
+    moods: ['low', 'meh', 'dead'], effort: 4, min: 5, max: 20, places: ['home'], after: '😄',
+    phases: [['Play a song you loved at 15', .3], ['Something with a stupid beat', .4], ['One slow song, sway it out', .3]] },
+  { id: 'floorstretch', title: 'Floor stretch + lo-fi', tagline: 'Lie down, but with intention.', cat: 'stretch', emoji: '🧘',
+    moods: ['dead', 'overwhelmed', 'low'], effort: 1, min: 5, max: 20, places: ['home', 'anywhere'], after: '😴',
+    phases: [['Child’s pose', .2], ['Lying twist, both sides', .25], ['Legs up the wall', .3], ['Just lie there. You’ve earned it.', .25]] },
+  { id: 'yogaflow', title: 'Slow yoga flow', tagline: 'Nothing to prove. Just unwind.', cat: 'yoga', emoji: '🌿',
+    moods: ['overwhelmed', 'low', 'meh'], effort: 3, min: 15, max: 45, places: ['home', 'gym'], after: '😌',
+    phases: [['Breath + cat-cow', .15], ['Sun salutations, slowly', .3], ['Standing poses', .25], ['Hip openers', .2], ['Savasana', .1]] },
+  { id: 'cricket', title: 'Colony cricket', tagline: 'Tennis ball. Building wall is the keeper.', cat: 'ball', emoji: '🏏',
+    moods: ['energized', 'restless', 'move', 'meh'], effort: 5, min: 30, max: 90, places: ['outside', 'court'], outdoor: true, competitive: true, after: '😁',
+    phases: [['Round up whoever’s around', .1], ['Bowl a few overs', .35], ['Bat till you’re out', .35], ['Argue about the LBW. Walk home.', .2]] },
+  { id: 'badminton', title: 'Badminton smash session', tagline: 'Rallies until someone says “last point”.', cat: 'ball', emoji: '🏸',
+    moods: ['restless', 'energized', 'move'], effort: 6, min: 20, max: 60, places: ['court', 'gym', 'outside'], competitive: true, after: '😁',
+    phases: [['Easy rallies to warm up', .2], ['Clears and drops drill', .2], ['Play a match to 21', .45], ['Stretch shoulders + calves', .15]] },
+  { id: 'stairs', title: 'Monsoon stair climb', tagline: 'Your building is the gym today.', cat: 'hiit', emoji: '🪜',
+    moods: ['restless', 'energized', 'move'], effort: 7, min: 10, max: 25, places: ['home', 'anywhere'], after: '🥵',
+    phases: [['Walk up, slow, to warm up', .2], ['Climb fast, walk down', .5], ['Two steps at a time, once', .1], ['Calf stretch on the last step', .2]] },
+  { id: 'pushpull', title: 'Push-pull strength', tagline: 'Lift heavy things, put them down.', cat: 'strength', emoji: '🏋️',
+    moods: ['energized', 'move', 'meh', 'restless'], effort: 7, min: 30, max: 75, places: ['gym'], after: '💪',
+    phases: [['Rower or bike warm-up', .12], ['Bench or push-ups, 4 sets', .22], ['Rows or lat pulldown, 4 sets', .22], ['Goblet squats, 3 sets', .22], ['Core + stretch', .22]] },
+  { id: 'homestrength', title: 'No-equipment strength', tagline: 'Your body weight, a towel, a chair.', cat: 'strength', emoji: '💪',
+    moods: ['meh', 'move', 'energized'], effort: 6, min: 15, max: 35, places: ['home', 'anywhere'], after: '💪',
+    phases: [['Warm-up: arm circles + squats', .15], ['Chair dips + push-ups', .25], ['Split squats', .25], ['Towel rows + plank', .25], ['Stretch', .1]] },
+  { id: 'chaiwalk', title: 'Chai stall walk', tagline: 'There and back. Chai is the reward.', cat: 'walk', emoji: '☕',
+    moods: ['low', 'meh', 'dead', 'overwhelmed'], effort: 2, min: 10, max: 30, places: ['outside', 'anywhere'], outdoor: true, after: '🙂',
+    phases: [['Walk to the furthest decent chai stall', .45], ['Chai. Sit. Watch people.', .2], ['Long way home', .35]] },
+  { id: 'cycle', title: 'Sunset cycle', tagline: 'Wind in your face, nowhere to be.', cat: 'cycle', emoji: '🚲',
+    moods: ['low', 'meh', 'restless', 'energized'], effort: 4, min: 20, max: 60, places: ['outside'], outdoor: true, after: '😌',
+    phases: [['Easy spin out', .3], ['Find a long straight road, push', .35], ['Coast home slowly', .35]] },
+  { id: 'swim', title: 'Swim laps', tagline: 'The only place your phone can’t find you.', cat: 'swim', emoji: '🏊',
+    moods: ['overwhelmed', 'restless', 'energized'], effort: 6, min: 20, max: 60, places: ['gym'], after: '😌',
+    phases: [['Easy laps, any stroke', .2], ['Steady freestyle', .45], ['Kickboard laps', .2], ['Float on your back', .15]] },
+  { id: 'football', title: 'Football kickabout', tagline: 'Jumpers for goalposts.', cat: 'ball', emoji: '⚽',
+    moods: ['energized', 'restless', 'move'], effort: 7, min: 30, max: 75, places: ['court', 'outside'], outdoor: true, competitive: true, after: '😁',
+    phases: [['Passing to warm up', .15], ['Shooting practice', .2], ['Small-sided game', .5], ['Cool-down walk', .15]] },
+  { id: 'incline', title: 'Incline walk + podcast', tagline: 'Treadmill, but make it a story.', cat: 'walk', emoji: '📻',
+    moods: ['meh', 'low', 'overwhelmed'], effort: 4, min: 20, max: 45, places: ['gym'], after: '🙂',
+    phases: [['Flat walk, start the episode', .15], ['Incline 8, steady', .6], ['Back to flat', .25]] },
+  { id: 'breathwalk', title: 'Breath + body walk', tagline: 'Slow walk, slower breath.', cat: 'walk', emoji: '🫁',
+    moods: ['overwhelmed', 'low', 'dead'], effort: 1, min: 5, max: 20, places: ['anywhere', 'outside', 'home'], after: '😌',
+    phases: [['Walk, breathe in for 4 steps', .35], ['Breathe out for 6 steps', .35], ['Notice five things you can see', .3]] },
+  { id: 'sprints', title: 'Sprint ladder', tagline: 'Go hard. Stop. Repeat.', cat: 'run', emoji: '⚡',
+    moods: ['energized', 'restless'], effort: 9, min: 15, max: 25, places: ['outside', 'court'], outdoor: true, competitive: true, after: '🥵',
+    phases: [['Jog + leg swings', .25], ['6 x 20-second sprints', .4], ['Walk back between each', .15], ['Long cool-down walk', .2]] },
+  { id: 'rope', title: 'Skipping rope rounds', tagline: 'Feels like being nine again.', cat: 'hiit', emoji: '🪢',
+    moods: ['restless', 'energized', 'move'], effort: 7, min: 10, max: 20, places: ['home', 'outside', 'court'], after: '😤',
+    phases: [['Easy bounce', .2], ['30 on, 30 off', .5], ['Try a double-under. Fail. Laugh.', .1], ['Calf stretch', .2]] },
+  { id: 'momwalk', title: 'Post-dinner walk with Mom', tagline: 'Or anyone who’ll gossip with you.', cat: 'walk', emoji: '👟',
+    moods: ['low', 'meh', 'overwhelmed'], effort: 2, min: 15, max: 40, places: ['outside', 'anywhere'], outdoor: true, after: '🥰',
+    phases: [['Convince someone to come', .1], ['Walk + talk', .75], ['One extra lap', .15]] },
+  { id: 'frisbee', title: 'Frisbee in the park', tagline: 'Throw, chase, look cool sometimes.', cat: 'ball', emoji: '🥏',
+    moods: ['energized', 'meh', 'low'], effort: 5, min: 20, max: 45, places: ['outside'], outdoor: true, after: '😄',
+    phases: [['Short throws', .25], ['Long throws, actual running', .5], ['Lie in the grass', .25]] },
+  { id: 'deskunknot', title: 'Desk unknot', tagline: 'For the shoulders that live near your ears.', cat: 'stretch', emoji: '🪑',
+    moods: ['dead', 'meh', 'overwhelmed'], effort: 1, min: 5, max: 12, places: ['home', 'anywhere'], after: '😮‍💨',
+    phases: [['Neck rolls', .25], ['Doorway chest stretch', .25], ['Seated twist', .25], ['Wrist + forearm stretch', .25]] },
+  { id: 'bolly', title: 'Bollywood cardio', tagline: 'Full filmy energy. Hook steps mandatory.', cat: 'dance', emoji: '🪩',
+    moods: ['energized', 'low', 'restless', 'meh'], effort: 6, min: 15, max: 35, places: ['home', 'anywhere'], after: '😄',
+    phases: [['Warm-up track', .15], ['Three high-energy songs', .55], ['One emotional ballad, full drama', .15], ['Cool down', .15]] },
+  { id: 'pickup', title: 'Pickup game', tagline: 'Show up. Get picked. Probably.', cat: 'ball', emoji: '🤝',
+    moods: ['energized', 'restless', 'move'], effort: 7, min: 30, max: 90, places: ['court'], outdoor: true, competitive: true, after: '😁',
+    phases: [['Warm up on the sideline', .15], ['Play', .7], ['Handshakes + water', .15]] },
+  { id: 'pilates', title: 'Pilates core burn', tagline: 'Small movements, big shaking.', cat: 'strength', emoji: '🧱',
+    moods: ['meh', 'move', 'overwhelmed'], effort: 5, min: 15, max: 30, places: ['home', 'gym'], after: '😮‍💨',
+    phases: [['The hundred', .2], ['Leg circles + roll-ups', .3], ['Side-lying series', .3], ['Spine stretch', .2]] },
+  { id: 'napwalk', title: 'Power nap, then a walk', tagline: '15 minutes down, 10 minutes out.', cat: 'walk', emoji: '😴',
+    moods: ['dead'], effort: 1, min: 15, max: 35, places: ['home', 'anywhere'], after: '🙂',
+    phases: [['Nap. Set an alarm.', .55], ['Splash water on your face', .05], ['Easy walk outside', .4]] },
+  { id: 'photowalk', title: 'Photo walk', tagline: 'Find ten things worth a photo.', cat: 'walk', emoji: '📸',
+    moods: ['low', 'meh', 'overwhelmed'], effort: 2, min: 15, max: 45, places: ['outside'], outdoor: true, after: '🙂',
+    phases: [['Walk, camera out', .8], ['Pick your best shot on the way back', .2]] },
+  { id: 'rower', title: 'Rowing machine intervals', tagline: 'Legs, then back, then regret.', cat: 'hiit', emoji: '🚣',
+    moods: ['restless', 'energized'], effort: 8, min: 15, max: 30, places: ['gym'], competitive: true, after: '🥵',
+    phases: [['Easy rowing', .2], ['1 min hard, 1 min easy', .55], ['Cool-down row', .25]] },
+  { id: 'surya', title: '12 sun salutations', tagline: 'The original morning routine.', cat: 'yoga', emoji: '☀️',
+    moods: ['dead', 'meh', 'low', 'move'], effort: 3, min: 10, max: 20, places: ['home', 'anywhere'], after: '🙂',
+    phases: [['Rounds 1–4, slow', .35], ['Rounds 5–8, flowing', .3], ['Rounds 9–12, with breath', .25], ['Lie flat', .1]] },
+];
+
+/* "I don't want to exercise." Every one of these is technically not a workout. */
+const TRICKS = [
+  { emoji: '🐕', text: 'Go outside and find a dog.', sub: 'Petting is encouraged. Asking first is required.', min: 10 },
+  { emoji: '👟', text: 'Put on shoes. You can come back immediately.', sub: 'That’s it. That’s the whole challenge.', min: 1 },
+  { emoji: '🎵', text: 'Walk until your favourite song ends.', sub: 'Then decide if you want another song.', min: 4 },
+  { emoji: '📸', text: 'Take a 7-minute walk and send me a picture of something interesting.', sub: 'A weird sign counts. So does a cat.', min: 7, photo: true },
+  { emoji: '☕', text: 'Walk to the nearest chai stall.', sub: 'Drinking the chai is optional. It’s not, actually.', min: 12 },
+  { emoji: '💪', text: 'Do one push-up. Just one.', sub: 'We’ll talk after.', min: 1 },
+  { emoji: '🐦', text: 'Stand on your balcony and count birds for 3 minutes.', sub: 'Crows count. Pigeons count double.', min: 3 },
+  { emoji: '🪜', text: 'Take the stairs to the top floor and back.', sub: 'The lift is right there. Ignore it.', min: 5 },
+  { emoji: '📞', text: 'Call someone you miss and pace while you talk.', sub: 'Your step count and your friendship both win.', min: 10 },
+  { emoji: '🕺', text: 'Dance to one song. Badly.', sub: 'Nobody is watching. We checked.', min: 4 },
+  { emoji: '🪴', text: 'Water every plant in the house.', sub: 'Then drink a glass yourself.', min: 3 },
+  { emoji: '🌳', text: 'Find the tallest tree near you and touch it.', sub: 'Hugging it is between you and the tree.', min: 8 },
+  { emoji: '🔴', text: 'Walk around the block counting red things.', sub: 'Report your number at the end.', min: 10 },
+  { emoji: '🐈', text: 'Stretch like a cat for 2 minutes.', sub: 'Big yawn included.', min: 2 },
+];
+
+/* Ingredient vocabulary. Synonyms let typing and AI answers map to the same thing. */
+const INGREDIENTS = [
+  ['egg', '🥚', ['eggs', 'anda']], ['bread', '🍞', ['pav', 'toast', 'bun']], ['onion', '🧅', ['pyaaz', 'onions']],
+  ['tomato', '🍅', ['tamatar', 'tomatoes']], ['chilli', '🌶️', ['green chilli', 'mirchi', 'chili', 'chillies']],
+  ['coriander', '🌿', ['dhania', 'cilantro']], ['paneer', '🧀', ['cottage cheese']], ['curd', '🥣', ['dahi', 'yogurt', 'yoghurt']],
+  ['milk', '🥛', ['doodh']], ['banana', '🍌', ['bananas', 'kela']], ['oats', '🌾', ['oatmeal']], ['rice', '🍚', ['chawal', 'cooked rice']],
+  ['dal', '🫘', ['lentils', 'moong', 'toor dal', 'masoor']], ['potato', '🥔', ['aloo', 'potatoes']], ['poha', '🍘', ['flattened rice']],
+  ['peanuts', '🥜', ['peanut', 'moongphali', 'groundnut']], ['peanut butter', '🥜', ['pb']], ['spinach', '🥬', ['palak']],
+  ['capsicum', '🫑', ['bell pepper', 'shimla mirch']], ['cheese', '🧀', ['cheese slice', 'cheddar', 'mozzarella']],
+  ['chicken', '🍗', []], ['besan', '🟡', ['gram flour', 'chickpea flour']], ['roti', '🫓', ['chapati', 'atta', 'tortilla', 'wrap']],
+  ['cucumber', '🥒', ['kheera']], ['lemon', '🍋', ['nimbu', 'lime']], ['apple', '🍎', ['apples']], ['honey', '🍯', []],
+  ['chana', '🫛', ['chickpeas', 'chole', 'kabuli chana']], ['sprouts', '🌱', ['moong sprouts']], ['noodles', '🍜', ['maggi', 'instant noodles']],
+  ['tofu', '⬜', []], ['carrot', '🥕', ['carrots', 'gajar']], ['peas', '🟢', ['matar', 'green peas']], ['garlic', '🧄', ['lehsun']],
+  ['rajma', '🫘', ['kidney beans']], ['sabzi', '🥘', ['leftover sabzi', 'leftovers', 'curry']], ['suji', '🌾', ['rava', 'semolina']],
+  ['butter', '🧈', ['amul butter']], ['ghee', '🫙', []], ['mushroom', '🍄', ['mushrooms']],
+];
+
+/* Recipes. kcal and protein are per serving, approximate. Salt, oil and basic masalas are assumed. */
+const RECIPES = [
+  { id: 'bhurji', name: 'Masala egg bhurji + toast', emoji: '🍳', need: ['egg', 'onion', 'tomato', 'bread'], opt: ['chilli', 'coriander', 'butter'], mins: 15, kcal: 420, protein: 24,
+    steps: ['Sauté onion and chilli till soft', 'Add tomato, salt, haldi, a pinch of masala', 'Crack in 3 eggs, scramble on low heat', 'Coriander on top, toast on the side'] },
+  { id: 'paneerwrap', name: 'Paneer bhurji wrap', emoji: '🌯', need: ['paneer', 'roti', 'onion'], opt: ['capsicum', 'tomato', 'chilli', 'coriander'], mins: 15, kcal: 480, protein: 28,
+    steps: ['Crumble 100g paneer', 'Sauté onion, capsicum, tomato with masala', 'Fold in paneer for 2 minutes', 'Roll it in a warm roti'] },
+  { id: 'pboats', name: 'Banana peanut-butter oats', emoji: '🥣', need: ['oats', 'milk', 'banana'], opt: ['peanut butter', 'honey'], mins: 8, kcal: 450, protein: 18,
+    steps: ['Simmer oats in milk for 4 minutes', 'Slice in half a banana', 'Top with a spoon of peanut butter and honey'] },
+  { id: 'curdrice', name: 'Curd rice', emoji: '🍚', need: ['rice', 'curd'], opt: ['cucumber', 'chilli', 'coriander'], mins: 10, kcal: 380, protein: 12,
+    steps: ['Mash rice slightly with curd and salt', 'Temper mustard seeds, curry leaves, chilli in a little oil', 'Pour over, add grated cucumber'] },
+  { id: 'chanachaat', name: 'Chana chaat', emoji: '🥗', need: ['chana', 'onion', 'tomato'], opt: ['lemon', 'cucumber', 'coriander', 'chilli'], mins: 10, kcal: 340, protein: 15,
+    steps: ['Rinse boiled or canned chana', 'Chop onion, tomato, cucumber fine', 'Toss with chaat masala and lemon'] },
+  { id: 'poha', name: 'Kanda poha', emoji: '🍛', need: ['poha', 'onion'], opt: ['peanuts', 'potato', 'lemon', 'chilli', 'coriander'], mins: 20, kcal: 360, protein: 9,
+    steps: ['Rinse poha, let it soften', 'Roast peanuts, sauté onion with mustard and haldi', 'Mix in poha, steam 2 minutes', 'Lemon and coriander to finish'] },
+  { id: 'chilla', name: 'Besan chilla', emoji: '🥞', need: ['besan', 'onion'], opt: ['tomato', 'chilli', 'coriander', 'curd'], mins: 20, kcal: 390, protein: 18,
+    steps: ['Whisk besan with water to a pouring batter', 'Add onion, tomato, chilli, ajwain', 'Spread thin on a hot tawa, flip once', 'Eat with curd'] },
+  { id: 'dalchawal', name: 'Dal chawal', emoji: '🍲', need: ['dal', 'rice'], opt: ['ghee', 'onion', 'tomato', 'garlic'], mins: 30, kcal: 520, protein: 20,
+    steps: ['Pressure-cook dal with haldi, 3 whistles', 'Temper jeera, garlic, onion, tomato', 'Pour over dal, serve on rice with ghee'] },
+  { id: 'sprouts', name: 'Sprouts salad', emoji: '🌱', need: ['sprouts', 'onion', 'tomato'], opt: ['lemon', 'cucumber', 'chilli'], mins: 10, kcal: 260, protein: 14,
+    steps: ['Steam sprouts for 3 minutes', 'Toss with chopped veg', 'Lemon, chaat masala, done'] },
+  { id: 'shake', name: 'Banana protein shake', emoji: '🥤', need: ['milk', 'banana'], opt: ['peanut butter', 'oats', 'honey', 'curd'], mins: 5, kcal: 330, protein: 15,
+    steps: ['Blend milk, banana, a spoon of oats', 'Add peanut butter if you have it', 'Drink it cold'] },
+  { id: 'eggrice', name: 'Egg fried rice', emoji: '🍚', need: ['rice', 'egg'], opt: ['onion', 'capsicum', 'carrot', 'peas', 'garlic'], mins: 15, kcal: 480, protein: 20,
+    steps: ['Scramble 2 eggs, set aside', 'Stir-fry garlic and veg on high heat', 'Add cold rice, soy or salt, then the egg'] },
+  { id: 'omelette', name: 'Cheese omelette', emoji: '🧀', need: ['egg', 'cheese'], opt: ['onion', 'chilli', 'bread', 'tomato'], mins: 10, kcal: 390, protein: 26,
+    steps: ['Beat 3 eggs with salt and chilli', 'Pour into a hot buttered pan', 'Cheese on one half, fold, slide out'] },
+  { id: 'jeeraaloo', name: 'Jeera aloo + roti', emoji: '🥔', need: ['potato', 'roti'], opt: ['curd', 'chilli', 'coriander'], mins: 25, kcal: 470, protein: 11,
+    steps: ['Boil and cube potatoes', 'Crackle jeera in oil, add potato and masala', 'Serve with roti and curd'] },
+  { id: 'palakpaneer', name: 'Quick palak paneer', emoji: '🥬', need: ['spinach', 'paneer'], opt: ['onion', 'garlic', 'tomato', 'roti'], mins: 25, kcal: 450, protein: 25,
+    steps: ['Blanch and blend spinach', 'Sauté garlic, onion, tomato with garam masala', 'Add spinach, simmer, fold in paneer cubes'] },
+  { id: 'chickenskillet', name: 'Tikka-style chicken skillet', emoji: '🍗', need: ['chicken', 'curd'], opt: ['onion', 'capsicum', 'lemon', 'garlic'], mins: 25, kcal: 430, protein: 40,
+    steps: ['Coat chicken in curd, chilli, garam masala, lemon', 'Sear on high heat till charred', 'Toss in onion and capsicum'] },
+  { id: 'rajma', name: 'Rajma rice bowl', emoji: '🫘', need: ['rajma', 'rice', 'onion', 'tomato'], opt: ['garlic', 'curd'], mins: 25, kcal: 540, protein: 21,
+    steps: ['Cook onion, garlic, tomato to a thick masala', 'Add boiled rajma, mash a few', 'Simmer and serve over rice'] },
+  { id: 'maggi', name: 'Hostel Maggi, upgraded', emoji: '🍜', need: ['noodles', 'egg'], opt: ['onion', 'peas', 'carrot', 'chilli', 'cheese'], mins: 12, kcal: 480, protein: 17,
+    steps: ['Cook noodles with chopped veg', 'Crack in an egg in the last minute', 'Stir. Cheese on top if you’re feeling it.'] },
+  { id: 'peanutchaat', name: 'Peanut chaat', emoji: '🥜', need: ['peanuts', 'onion', 'tomato'], opt: ['lemon', 'chilli', 'coriander'], mins: 5, kcal: 300, protein: 12,
+    steps: ['Roast or boil peanuts', 'Toss with onion, tomato, chaat masala', 'Squeeze lemon over'] },
+  { id: 'paneersandwich', name: 'Paneer tikka sandwich', emoji: '🥪', need: ['bread', 'paneer'], opt: ['capsicum', 'onion', 'cheese', 'curd'], mins: 12, kcal: 430, protein: 24,
+    steps: ['Toss paneer with curd and tikka masala', 'Layer on bread with onion and capsicum', 'Grill till crisp'] },
+  { id: 'tofustir', name: 'Tofu chilli stir-fry', emoji: '🥢', need: ['tofu', 'capsicum'], opt: ['onion', 'garlic', 'chilli', 'rice'], mins: 15, kcal: 360, protein: 22,
+    steps: ['Pan-fry tofu cubes till golden', 'Add garlic, chilli, capsicum, onion', 'Splash of soy, serve over rice'] },
+  { id: 'fruitcurd', name: 'Fruit + curd bowl', emoji: '🍎', need: ['curd'], any: ['banana', 'apple'], opt: ['honey', 'oats', 'peanuts'], mins: 5, kcal: 280, protein: 12,
+    steps: ['Spoon curd into a bowl', 'Chop fruit on top', 'Honey and a handful of oats or peanuts'] },
+  { id: 'leftover', name: 'Leftover sabzi roll + raita', emoji: '🥙', need: ['sabzi', 'roti'], opt: ['curd', 'cucumber', 'onion'], mins: 10, kcal: 450, protein: 14,
+    steps: ['Warm the sabzi in a pan', 'Roll it in a roti with sliced onion', 'Quick raita: curd, cucumber, salt, jeera'] },
+  { id: 'upma', name: 'Vegetable upma', emoji: '🍲', need: ['suji', 'onion'], opt: ['peas', 'carrot', 'chilli', 'lemon'], mins: 20, kcal: 340, protein: 9,
+    steps: ['Dry-roast suji till fragrant', 'Temper mustard, onion, chilli, veg', 'Add hot water, then suji, stir till fluffy'] },
+  { id: 'overnightoats', name: 'Overnight oats', emoji: '🫙', need: ['oats', 'milk'], opt: ['banana', 'honey', 'peanut butter', 'curd'], mins: 5, kcal: 380, protein: 15,
+    steps: ['Mix oats, milk and a spoon of curd in a jar', 'Fridge overnight (or 20 min if you’re impatient)', 'Top with banana and honey'] },
+  { id: 'mushroomtoast', name: 'Garlic mushroom toast', emoji: '🍄', need: ['mushroom', 'bread'], opt: ['garlic', 'butter', 'cheese', 'egg'], mins: 12, kcal: 340, protein: 13,
+    steps: ['Sauté mushrooms in butter and garlic', 'Pile onto toast', 'Cheese or a fried egg on top'] },
+];
+
+/* What's in the sample fridge illustration. */
+const SAMPLE_FRIDGE = ['egg', 'tomato', 'onion', 'paneer', 'curd', 'bread', 'chilli', 'coriander', 'milk', 'banana'];
+
+const WATCHES = [
+  { id: 'apple', name: 'Apple Watch', emoji: '⌚' },
+  { id: 'garmin', name: 'Garmin', emoji: '🧭' },
+  { id: 'fitbit', name: 'Fitbit', emoji: '📟' },
+  { id: 'whoop', name: 'WHOOP', emoji: '🔘' },
+  { id: 'noise', name: 'Noise / boAt', emoji: '🎧' },
+];
+
+/* Demo readings shown after "connecting" a watch. Clearly labelled as demo in the UI. */
+const DEMO_WATCH = { sleepMin: 312, restingHr: 68, hrBaseline: 62, steps: 2340, hrv: 38 };
+
+const CITIES = [
+  { id: 'delhi', name: 'New Delhi', lat: 28.61, lon: 77.21 },
+  { id: 'mumbai', name: 'Mumbai', lat: 19.08, lon: 72.88 },
+  { id: 'bengaluru', name: 'Bengaluru', lat: 12.97, lon: 77.59 },
+  { id: 'sonipat', name: 'Sonipat', lat: 28.99, lon: 77.02 },
+];
+
+/* Demo weather scenarios, used when live weather can't load, and for showing how context changes picks. */
+const SCENARIOS = {
+  clear: { label: 'Clear', temp: 27, rain: false, aqi: 64, code: 1, demo: true },
+  rain:  { label: 'Raining', temp: 24, rain: true, aqi: 48, code: 63, demo: true },
+  smog:  { label: 'Bad air', temp: 29, rain: false, aqi: 238, code: 45, demo: true },
+  hot:   { label: 'Very hot', temp: 39, rain: false, aqi: 110, code: 0, demo: true },
+};
+
+;
+/* MODO — the matching brain. Pure functions, no UI. */
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('modo:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('modo:' + k, JSON.stringify(v)); } catch (e) {} },
+  clear() { try { Object.keys(localStorage).filter(k => k.startsWith('modo:')).forEach(k => localStorage.removeItem(k)); } catch (e) {} },
+};
+
+const byId = (list, id) => list.find(x => x.id === id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---------- context: weather + watch ---------- */
+
+function contextNotes(ctx, place) {
+  const notes = [];
+  const w = ctx.weather;
+  // If you've told me you're outside, I warn instead of overruling you.
+  const flexible = place === 'anywhere' || place === 'home' || place === 'gym';
+  if (w) {
+    if (w.aqi >= 150) notes.push(flexible
+      ? { kind: 'air', text: `AQI is ${w.aqi} today, so I kept you indoors.`, outdoorPenalty: 6 }
+      : { kind: 'air', text: `AQI is ${w.aqi}. I’d keep it shorter, or wear a mask.`, effortCap: 6 });
+    else if (w.rain) notes.push(flexible
+      ? { kind: 'rain', text: 'It’s raining, so outdoor plans moved down the list.', outdoorPenalty: 4 }
+      : { kind: 'rain', text: 'It’s raining. Covered court, or embrace the drama.' });
+    else if (w.temp >= 37) notes.push(flexible
+      ? { kind: 'heat', text: `It’s ${w.temp}° out. Indoors or near water is smarter.`, outdoorPenalty: 3 }
+      : { kind: 'heat', text: `It’s ${w.temp}° out. Carry water, find shade.`, effortCap: 6 });
+    else if (w.aqi && w.aqi < 100) notes.push({ kind: 'good', text: `Air’s decent (AQI ${w.aqi}). Good day to be outside.`, outdoorPenalty: -1 });
+  }
+  const watch = ctx.watch;
+  if (watch && watch.connected) {
+    if (watch.sleepMin < 360) notes.push({ kind: 'sleep', text: `You slept ${fmtSleep(watch.sleepMin)}, so I’ve capped effort at 6/10.`, effortCap: 6 });
+    if (watch.steps < 4000) notes.push({ kind: 'steps', text: `Only ${watch.steps.toLocaleString('en-IN')} steps so far today. Anything counts.`, });
+  }
+  return notes;
+}
+
+function fmtSleep(m) { return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`; }
+
+/* ---------- taste ---------- */
+
+function emptyTaste() { return { cats: {}, competitive: 0, swipes: 0, earlyNopes: {} }; }
+
+function learn(taste, act, liked) {
+  const t = JSON.parse(JSON.stringify(taste || emptyTaste()));
+  const d = liked ? 1 : -1;
+  const c = t.cats[act.cat] || { score: 0, seen: 0 };
+  c.score += d; c.seen += 1; t.cats[act.cat] = c;
+  if (act.competitive) t.competitive += d;
+  t.swipes += 1;
+  if (!liked && new Date().getHours() < 9) t.earlyNopes[act.cat] = (t.earlyNopes[act.cat] || 0) + 1;
+  return t;
+}
+
+function tasteProfile(taste) {
+  const t = taste || emptyTaste();
+  const out = { hate: [], like: [], tolerate: [], secret: [] };
+  Object.entries(t.cats).forEach(([cat, c]) => {
+    let label = CATS[cat];
+    if (c.score <= -1 && c.seen >= 1) {
+      if (t.earlyNopes[cat] && t.earlyNopes[cat] >= c.seen) label += ' before 9am';
+      out.hate.push({ cat, label, s: c.score });
+    } else if (c.score >= 1) out.like.push({ cat, label, s: c.score });
+    else out.tolerate.push({ cat, label, s: c.score });
+  });
+  out.hate.sort((a, b) => a.s - b.s); out.like.sort((a, b) => b.s - a.s);
+  if (t.competitive >= 2) out.secret.push({ label: 'competitive things' });
+  else if (out.like.length && out.like[0].s >= 2) out.secret.push({ label: CATS[out.like[0].cat] + ' (more than you admit)' });
+  return out;
+}
+
+/* ---------- matching ---------- */
+
+function sessionLength(act, time) {
+  if (time === 60) return clamp(Math.max(act.min, 60), act.min, act.max);
+  if (time < act.min) return null;            // can't fit
+  return clamp(time, act.min, act.max);
+}
+
+function scoreActivity(act, sel, taste, notes, rng) {
+  const place = sel.place;
+  if (place !== 'anywhere' && !act.places.includes(place)) return null;
+  if (place === 'anywhere' && !act.places.some(p => p === 'anywhere' || p === 'home' || p === 'outside')) return null;
+  let mins = sessionLength(act, sel.time);
+  if (mins == null) { if (sel.time === 5 && act.min <= 10) mins = 5; else return null; }
+
+  const suffer = byId(SUFFERING, sel.suffer);
+  let target = suffer.target;
+  const caps = notes.filter(n => n.effortCap);
+  const cap = caps.length ? { effortCap: Math.min(...caps.map(n => n.effortCap)) } : null;
+  if (cap) target = Math.min(target, cap.effortCap);
+
+  let s = 0;
+  const reasons = [];
+  if (act.moods.includes(sel.mood)) { s += 4; reasons.push('mood'); }
+  s -= Math.abs(act.effort - target) * 0.7;
+  if (cap && act.effort > cap.effortCap) s -= 3;
+  const ctxPen = notes.reduce((a, n) => a + (n.outdoorPenalty || 0), 0);
+  if (act.outdoor) s -= ctxPen;
+  if (sel.time !== 60 && mins < sel.time) s -= (sel.time - mins) / 10;
+
+  const c = taste && taste.cats[act.cat];
+  if (c) s += clamp(c.score, -3, 3) * 1.3;
+  if (act.competitive && taste) s += clamp(taste.competitive, -2, 3) * 0.6;
+  s += (rng ? rng() : Math.random()) * 1.2;
+  return { act, mins, score: s, reasons };
+}
+
+function buildFeed(sel, taste, ctx, seed) {
+  const notes = contextNotes(ctx, sel.place);
+  const rng = mulberry(seed || Date.now());
+  const scored = ACTIVITIES.map(a => scoreActivity(a, sel, taste, notes, rng)).filter(Boolean).sort((a, b) => b.score - a.score);
+  const picked = [], perCat = {};
+  for (const x of scored) {
+    if ((perCat[x.act.cat] || 0) >= 2) continue;
+    perCat[x.act.cat] = (perCat[x.act.cat] || 0) + 1;
+    picked.push(x);
+    if (picked.length >= 7) break;
+  }
+  return { cards: picked, notes };
+}
+
+function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* Split a session into steps that add up exactly to the chosen minutes. */
+function buildPlan(act, mins) {
+  const raw = act.phases.map(([label, f]) => ({ label, exact: f * mins }));
+  raw.forEach(r => r.min = Math.max(1, Math.floor(r.exact)));
+  let diff = mins - raw.reduce((a, r) => a + r.min, 0);
+  const order = raw.map((r, i) => i).sort((i, j) => (raw[j].exact - raw[j].min) - (raw[i].exact - raw[i].min));
+  let k = 0;
+  while (diff > 0) { raw[order[k % order.length]].min += 1; diff--; k++; }
+  while (diff < 0) { const i = raw.reduce((b, r, j) => r.min > raw[b].min ? j : b, 0); raw[i].min -= 1; diff++; }
+  return raw.filter(r => r.min > 0).map(r => ({ label: r.label, min: r.min }));
+}
+
+function whyLine(act, sel, notes) {
+  const mood = byId(MOODS, sel.mood);
+  const bits = [];
+  bits.push(`You’re ${mood.label.toLowerCase().replace('i need to move', 'itching to move')}`);
+  const sf = sel.suffer;
+  bits.push(sf === 'none' ? 'want it gentle' : sf === 'little' ? 'okay with a little effort' : 'want to suffer a bit');
+  const place = byId(PLACES, sel.place);
+  if (sel.place === 'outside') bits.push('want to leave the house');
+  else if (sel.place === 'home') bits.push('staying in');
+  else if (sel.place === 'court') bits.push('have a court nearby');
+  else if (sel.place === 'gym') bits.push('are at the gym');
+  else bits.push('can go anywhere');
+  let line = bits.join(' + ') + '.';
+  const ctxNote = notes.find(n => n.kind === 'air' || n.kind === 'rain' || n.kind === 'heat' || n.kind === 'sleep');
+  if (ctxNote) line += ' ' + ctxNote.text;
+  return line;
+}
+
+/* ---------- energy ---------- */
+
+function kcalBurned(effort, mins, weightKg) {
+  const met = 1.6 + effort * 0.85;
+  return Math.round(met * (weightKg || 62) * (mins / 60));
+}
+
+/* Mifflin-St Jeor. */
+function dailyNeeds(p) {
+  const base = 10 * p.weight + 6.25 * p.height - 5 * p.age + (p.sex === 'm' ? 5 : p.sex === 'f' ? -161 : -78);
+  const factor = { low: 1.3, some: 1.5, very: 1.7 }[p.activity] || 1.45;
+  return Math.round(base * factor / 10) * 10;
+}
+
+function mealWindow(profile, burned) {
+  const tdee = dailyNeeds(profile);
+  const mid = tdee * 0.28 + burned * 0.35;
+  const lo = Math.round((mid - 90) / 10) * 10, hi = Math.round((mid + 90) / 10) * 10;
+  return { tdee, lo, hi, mid: Math.round(mid) };
+}
+
+/* ---------- ingredients + recipes ---------- */
+
+const ING_INDEX = (() => {
+  const m = {};
+  INGREDIENTS.forEach(([name, emoji, syn]) => { m[name] = name; syn.forEach(s => m[s] = name); });
+  return m;
+})();
+const ingEmoji = n => (INGREDIENTS.find(i => i[0] === n) || [n, '•'])[1];
+
+function normalizeIngredient(s) {
+  const k = String(s || '').toLowerCase().trim().replace(/[^a-z\s]/g, '').replace(/\s+/g, ' ');
+  if (!k) return null;
+  if (ING_INDEX[k]) return ING_INDEX[k];
+  if (k.endsWith('es') && ING_INDEX[k.slice(0, -2)]) return ING_INDEX[k.slice(0, -2)];
+  if (k.endsWith('s') && ING_INDEX[k.slice(0, -1)]) return ING_INDEX[k.slice(0, -1)];
+  const hit = Object.keys(ING_INDEX).find(x => x.length > 3 && (k.includes(x)));
+  return hit ? ING_INDEX[hit] : k;
+}
+
+function parseIngredients(text) {
+  return [...new Set(String(text).split(/[,\n;]+| and /).map(normalizeIngredient).filter(Boolean))];
+}
+
+function matchRecipes(have, win, afterWorkout) {
+  const H = new Set(have);
+  return RECIPES.map(r => {
+    const missing = r.need.filter(n => !H.has(n));
+    if (r.any && !r.any.some(n => H.has(n))) missing.push(r.any.join(' or '));
+    const usesOpt = (r.opt || []).filter(n => H.has(n));
+    const used = r.need.filter(n => H.has(n)).concat(r.any ? r.any.filter(n => H.has(n)) : [], usesOpt);
+    let servings = 1;
+    if (win && r.kcal < win.lo - 60) servings = 1.5;
+    const kcal = Math.round(r.kcal * servings / 10) * 10, protein = Math.round(r.protein * servings);
+    const fits = win ? kcal >= win.lo - 60 && kcal <= win.hi + 60 : true;
+    let score = -missing.length * 10 + usesOpt.length * 1.2 + (afterWorkout ? protein / 8 : 0) + (fits ? 3 : 0) - r.mins / 30;
+    return { ...r, missing, used, servings, kcalS: kcal, proteinS: protein, fits, score };
+  }).filter(r => r.missing.length <= 1).sort((a, b) => a.missing.length - b.missing.length || b.score - a.score);
+}
+
+;
+/* MODO — AI + live data adapters. Every call has an offline fallback, so the app never breaks. */
+
+const AI = {
+  mode: 'off',      // 'api' (our serverless route) | 'sample' (Claude inside a claude.ai artifact) | 'off'
+  sample: null,
+  images: false,
+
+  async init() {
+    try {
+      const r = await withTimeout(fetch('/api/health'), 3500);
+      if (r.ok) { const j = await r.json(); if (j.ai) { this.mode = 'api'; this.images = true; return this.mode; } }
+    } catch (e) {}
+    try {
+      if (window.claude && typeof window.claude.use === 'function') {
+        const s = await withTimeout(window.claude.use('sample'), 10500);
+        if (s) {
+          this.sample = s; this.mode = 'sample';
+          try { const lim = await s.limits(); this.images = !!(lim && lim.images); } catch (e) {}
+        }
+      }
+    } catch (e) {}
+    return this.mode;
+  },
+
+  async json(prompt, image) {
+    if (this.mode === 'api') {
+      const r = await withTimeout(fetch('/api/ai', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, image }) }), 40000);
+      if (!r.ok) throw new Error('ai ' + r.status);
+      const j = await r.json();
+      return j.data;
+    }
+    if (this.mode === 'sample') {
+      const opts = { modelTier: image ? 'default' : 'quick' };
+      if (image && this.images) opts.images = [dataUrlToBlob(image)];
+      return await this.sample.json(prompt, opts);
+    }
+    throw new Error('ai off');
+  },
+
+  async scanFridge(dataUrl) {
+    const prompt = `You are looking at a photo of the inside of a fridge or a kitchen counter in India.
+List every food ingredient you can clearly see. Use short common English names (e.g. "egg", "paneer", "curd", "tomato", "coriander", "milk", "leftover sabzi").
+Ignore containers you can't see into. Return JSON only: {"items": ["egg", "tomato"], "note": "one short friendly sentence about the fridge"}`;
+    const out = await this.json(prompt, dataUrl);
+    return { items: (out.items || []).map(normalizeIngredient).filter(Boolean), note: out.note || '' };
+  },
+
+  async chefSpecial(have, win, hideCals, after) {
+    const prompt = `You are MODO, a warm, slightly cheeky Indian home-cooking coach.
+The person just finished: ${after || 'a workout'}. They have: ${have.join(', ')}. Assume salt, oil and basic masalas.
+Target for this meal: ${win.lo}-${win.hi} kcal${hideCals ? ' (do not mention calories in the text)' : ''}. Prefer protein after exercise.
+Invent ONE dish using mostly what they have. Keep it to ingredients from the list plus pantry basics.
+Return JSON only: {"name": "...", "emoji": "one emoji", "mins": 15, "kcal": 450, "protein": 25, "uses": ["egg","onion"], "steps": ["...", "...", "..."], "why": "one short sentence on why this suits them right now"}`;
+    return await this.json(prompt);
+  },
+};
+
+function dataUrlToBlob(u) {
+  const [head, b64] = u.split(',');
+  const bin = atob(b64); const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: (head.match(/data:(.*?);/) || [])[1] || 'image/jpeg' });
+}
+
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+}
+
+/* Live weather + air quality from Open-Meteo (no key). Falls back to a labelled demo scenario. */
+async function fetchWeather(lat, lon) {
+  const w = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,weather_code&timezone=auto`;
+  const a = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi`;
+  const [wr, ar] = await Promise.all([withTimeout(fetch(w), 6000), withTimeout(fetch(a), 6000)]);
+  const wj = await wr.json(), aj = await ar.json();
+  const code = wj.current.weather_code;
+  const rain = wj.current.precipitation > 0.1 || (code >= 51 && code <= 82) || code >= 95;
+  return { temp: Math.round(wj.current.temperature_2m), rain, code, aqi: Math.round(aj.current.us_aqi), demo: false };
+}
+
+function weatherWord(w) {
+  if (!w) return '';
+  if (w.rain) return 'Rain';
+  if (w.code === 45 || w.code === 48) return 'Haze';
+  if (w.code <= 1) return 'Clear';
+  if (w.code <= 3) return 'Cloudy';
+  return 'Mixed';
+}
+
+function aqiWord(a) {
+  if (a == null) return '';
+  if (a <= 50) return 'Good';
+  if (a <= 100) return 'Okay';
+  if (a <= 150) return 'Meh';
+  if (a <= 200) return 'Unhealthy';
+  if (a <= 300) return 'Bad';
+  return 'Hazardous';
+}
+
+/* Downscale photos before sending them anywhere. */
+function shrinkImage(file, maxSide = 1024) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = rej; img.src = fr.result;
+    };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+
+;
+/* MODO — UI. Preact + htm, no build step. */
+const { html, render, useState, useEffect, useRef, useMemo } = htmPreact;
+
+const AFTER_MOODS = [
+  { id: 'calm', emoji: '😌', label: 'Calm', v: 2 },
+  { id: 'good', emoji: '😄', label: 'Good', v: 2 },
+  { id: 'buzzing', emoji: '⚡', label: 'Buzzing', v: 2 },
+  { id: 'lighter', emoji: '😮‍💨', label: 'Lighter', v: 1 },
+  { id: 'same', emoji: '😐', label: 'Same', v: 0 },
+  { id: 'wrecked', emoji: '🥵', label: 'Wrecked', v: 0 },
+];
+const BEFORE_V = { dead: -2, meh: -1, restless: -1, overwhelmed: -2, energized: 1, low: -2, move: 0 };
+const YES = ['I could do that', 'I need this', 'Okay, fine', 'Go on then'];
+const NO = ['Absolutely not', 'Not today', 'Hard pass', 'Nah'];
+const DEFAULT_PROFILE = { sex: 'x', age: 21, height: 165, weight: 60, activity: 'some' };
+
+function greeting() {
+  const d = new Date(), h = d.getHours();
+  const day = d.toLocaleDateString('en-IN', { weekday: 'long' });
+  const part = h < 5 ? 'late night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
+  return `${day} ${part}`;
+}
+
+function Effort({ n }) {
+  return html`<span class="effort" aria-label=${'Effort ' + n + ' of 10'}>${Array.from({ length: 10 }, (_, i) => html`<i class=${i < n ? 'on' : ''}></i>`)}</span>`;
+}
+
+function placeEmoji(act, sel) {
+  const p = sel.place !== 'anywhere' && act.places.includes(sel.place) ? sel.place : act.places[0];
+  return (byId(PLACES, p) || PLACES[4]).emoji;
+}
+
+/* ---------------- App ---------------- */
+
+function App() {
+  const [screen, setScreen] = useState('home');
+  const [sel, setSel] = useState({ mood: null, suffer: null, time: null, place: null });
+  const [qStep, setQStep] = useState(0);
+  const [feed, setFeed] = useState(null);
+  const [feedIdx, setFeedIdx] = useState(0);
+  const [chosen, setChosen] = useState(null);
+  const [last, setLast] = useState(null);
+  const [taste, setTaste] = useState(() => store.get('taste', emptyTaste()));
+  const [history, setHistory] = useState(() => store.get('history', []));
+  const [profile, setProfile] = useState(() => store.get('profile', null));
+  const [watch, setWatch] = useState(() => store.get('watch', null));
+  const [hideCals, setHideCals] = useState(() => store.get('hideCals', false));
+  const [cityId, setCityId] = useState(() => store.get('city', 'delhi'));
+  const [scenario, setScenario] = useState(() => store.get('scenario', null));
+  const [live, setLive] = useState(null);
+  const [weatherState, setWeatherState] = useState('loading');
+  const [sheet, setSheet] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [aiMode, setAiMode] = useState('off');
+  const [refuelFrom, setRefuelFrom] = useState(null);
+
+  useEffect(() => store.set('taste', taste), [taste]);
+  useEffect(() => store.set('history', history), [history]);
+  useEffect(() => store.set('profile', profile), [profile]);
+  useEffect(() => store.set('watch', watch), [watch]);
+  useEffect(() => store.set('hideCals', hideCals), [hideCals]);
+  useEffect(() => store.set('city', cityId), [cityId]);
+  useEffect(() => store.set('scenario', scenario), [scenario]);
+  useEffect(() => { AI.init().then(setAiMode); }, []);
+
+  useEffect(() => {
+    if (cityId === 'here') return;
+    const c = byId(CITIES, cityId) || CITIES[0];
+    setWeatherState('loading');
+    fetchWeather(c.lat, c.lon).then(w => { setLive({ ...w, place: c.name }); setWeatherState('live'); })
+      .catch(() => { setLive(null); setWeatherState('offline'); });
+  }, [cityId]);
+
+  const weather = scenario ? { ...SCENARIOS[scenario], place: 'Simulated' }
+    : live ? live : { ...SCENARIOS.clear, place: (byId(CITIES, cityId) || CITIES[0]).name };
+  const ctx = { weather, watch };
+
+  function say(t) { const k = Date.now(); setToast({ t, k }); setTimeout(() => setToast(x => x && x.k === k ? null : x), 2500); }
+  function go(s) { setScreen(s); const el = document.querySelector('.screen'); if (el) el.scrollTop = 0; }
+
+  function pickMood(id) { setSel({ mood: id, suffer: null, time: null, place: null }); setQStep(0); go('q'); }
+
+  function finishQuestions(next) {
+    const f = buildFeed(next, taste, ctx, Date.now());
+    setFeed(f); setFeedIdx(0); go('feed');
+  }
+
+  function decide(card, liked) {
+    const before = taste.swipes;
+    const t = learn(taste, card.act, liked);
+    setTaste(t);
+    if (before < 6 && t.swipes >= 6) say('MODO is starting to get you. Peek in “You”.');
+    if (liked) {
+      const notes = feed.notes;
+      setChosen({ act: card.act, mins: card.mins, plan: buildPlan(card.act, card.mins), why: whyLine(card.act, sel, notes) });
+      go('reveal');
+    } else setFeedIdx(i => i + 1);
+  }
+
+  function reshuffle() {
+    const f = buildFeed(sel, taste, ctx, Date.now() + 7);
+    setFeed(f); setFeedIdx(0);
+  }
+
+  function completeSession(actualMin) {
+    const w = (profile || DEFAULT_PROFILE).weight;
+    const mins = Math.max(1, Math.round(actualMin));
+    setLast({ kind: 'move', title: chosen.act.title, emoji: chosen.act.emoji, mins, effort: chosen.act.effort, burned: kcalBurned(chosen.act.effort, mins, w), before: sel.mood });
+    go('after');
+  }
+
+  function completeTrick(tr, photo) {
+    const w = (profile || DEFAULT_PROFILE).weight;
+    setLast({ kind: 'trick', title: tr.text, emoji: tr.emoji, mins: tr.min, effort: 2, burned: kcalBurned(2, tr.min, w), before: null, photo });
+    go('after');
+  }
+
+  function logAfter(afterId) {
+    const entry = { ...last, after: afterId, t: Date.now() };
+    setHistory(h => [entry, ...h].slice(0, 40));
+    setLast(entry);
+  }
+
+  const shared = { sel, setSel, go, say, ctx, weather, watch, setWatch, taste, history, profile, setProfile, hideCals, setHideCals, setSheet, aiMode };
+
+  let body;
+  if (screen === 'home') body = html`<${Home} ...${shared} pickMood=${pickMood} weatherState=${weatherState} onRefuel=${() => { setRefuelFrom(null); go('refuel'); }} />`;
+  else if (screen === 'q') body = html`<${Questions} ...${shared} step=${qStep} setStep=${setQStep} onDone=${finishQuestions} />`;
+  else if (screen === 'feed') body = html`<${Feed} ...${shared} feed=${feed} idx=${feedIdx} decide=${decide} reshuffle=${reshuffle} />`;
+  else if (screen === 'reveal') body = html`<${Reveal} ...${shared} chosen=${chosen} onStart=${() => go('session')} onBack=${() => { setFeedIdx(i => i + 1); go('feed'); }} />`;
+  else if (screen === 'session') body = html`<${Session} ...${shared} chosen=${chosen} onDone=${completeSession} />`;
+  else if (screen === 'after') body = html`<${After} ...${shared} last=${last} logAfter=${logAfter} onRefuel=${() => { setRefuelFrom(last); go('refuel'); }} />`;
+  else if (screen === 'refuel') body = html`<${Refuel} ...${shared} from=${refuelFrom} />`;
+  else if (screen === 'trick') body = html`<${Trick} ...${shared} onAccept=${(tr) => { setChosen({ trick: tr }); go('trickgo'); }} />`;
+  else if (screen === 'trickgo') body = html`<${TrickGo} ...${shared} trick=${chosen.trick} onDone=${completeTrick} />`;
+  else if (screen === 'me') body = html`<${Me} ...${shared} reset=${() => { store.clear(); setTaste(emptyTaste()); setHistory([]); setProfile(null); setWatch(null); say('Fresh start.'); }} onRefuel=${() => { setRefuelFrom(null); go('refuel'); }} />`;
+
+  return html`
+    <div class="aside" aria-hidden="true">
+      <div class="k">Mosaic Builder Round</div>
+      <h2>Your mood.<br/>Your move.</h2>
+      <p>MODO asks how you feel, then finds movement you’ll actually want to do. Swipe to teach it your taste. Refuel from whatever’s in your fridge.</p>
+      <p class="k">Try: 😤 Restless → 😈 → 30 → 🏀 Court</p>
+    </div>
+    <main class="device">
+      ${body}
+      ${sheet === 'watch' && html`<${WatchSheet} watch=${watch} setWatch=${setWatch} close=${() => setSheet(null)} say=${say} />`}
+      ${sheet === 'context' && html`<${ContextSheet} cityId=${cityId} setCityId=${(id) => { setScenario(null); setCityId(id); }} scenario=${scenario} setScenario=${setScenario} weather=${weather} weatherState=${weatherState} close=${() => setSheet(null)} setLive=${setLive} setWeatherState=${setWeatherState} />`}
+      ${toast && html`<div class="toast" key=${toast.k} role="status">${toast.t}</div>`}
+    </main>`;
+}
+
+/* ---------------- shared bits ---------------- */
+
+function Bar({ onBack, title, right }) {
+  return html`<div class="bar">
+    ${onBack ? html`<button class="iconbtn back" onClick=${onBack} aria-label="Back">←</button>` : html`<div class="logo"><i></i>modo</div>`}
+    ${title && html`<div class="eyebrow">${title}</div>`}
+    <div class="row" style="flex:none;gap:6px">${right || html`<span style="width:40px"></span>`}</div>
+  </div>`;
+}
+
+function ContextStrip({ weather, watch, setSheet, weatherState }) {
+  const bad = weather.aqi >= 150;
+  return html`<div class="ctx">
+    <button class="pill" onClick=${() => setSheet('context')}>${weather.rain ? '🌧️' : weather.code === 45 ? '🌫️' : '☀️'} ${weather.place} · ${weather.temp}°${weather.demo || weatherState !== 'live' ? html` <span class="tag">demo</span>` : ''}</button>
+    <button class=${'pill ' + (bad ? 'bad' : 'sage')} onClick=${() => setSheet('context')}>AQI ${weather.aqi} · ${aqiWord(weather.aqi)}</button>
+    ${watch && watch.connected
+      ? html`<button class="pill lav" onClick=${() => setSheet('watch')}>😴 ${fmtSleep(watch.sleepMin)}</button>
+             <button class="pill lav" onClick=${() => setSheet('watch')}>👣 ${watch.steps.toLocaleString('en-IN')} <span class="tag">demo</span></button>`
+      : html`<button class="pill" onClick=${() => setSheet('watch')}>⌚ Connect your watch</button>`}
+  </div>`;
+}
+
+/* ---------------- Home ---------------- */
+
+function Home({ pickMood, go, weather, watch, setSheet, history, weatherState, onRefuel }) {
+  const withBefore = history.filter(h => h.before && h.after);
+  const better = withBefore.filter(h => (byId(AFTER_MOODS, h.after) || {}).v > (BEFORE_V[h.before] || 0)).length;
+  return html`<section class="screen">
+    <${Bar} right=${html`
+      <button class="iconbtn" onClick=${onRefuel} aria-label="Refuel">🥗</button>
+      <button class="iconbtn" onClick=${() => go('me')}>You</button>`} />
+    <div class="eyebrow mt-s">${greeting()}</div>
+    <h1 class="h-hero">How do you want to <em>feel?</em></h1>
+    <p class="sub">Start with how you feel right now. I’ll figure out how you should move.</p>
+    <${ContextStrip} weather=${weather} watch=${watch} setSheet=${setSheet} weatherState=${weatherState} />
+    <div class="moods" role="list">
+      ${MOODS.map((m, i) => html`<button role="listitem" class=${'mood' + (i === MOODS.length - 1 ? ' wide' : '')} onClick=${() => pickMood(m.id)}>
+        <span class="e">${m.emoji}</span><div><b>${m.label}</b><span class="ln">${m.line}</span></div>
+      </button>`)}
+    </div>
+    <button class="nope-btn" onClick=${() => go('trick')}>
+      <span><b>I don’t want to exercise.</b><span>Fine. Tap here anyway.</span></span>
+      <span class="arrow">🙅</span>
+    </button>
+    ${withBefore.length > 0 && html`<p class="small mt" style="text-align:center">Moving lifted your mood <b>${better} of ${withBefore.length}</b> times so far.</p>`}
+  </section>`;
+}
+
+/* ---------------- Questions ---------------- */
+
+function Questions({ sel, setSel, go, step, setStep, onDone }) {
+  const mood = byId(MOODS, sel.mood);
+  const choose = (key, val) => {
+    const next = { ...sel, [key]: val };
+    setSel(next);
+    setTimeout(() => { if (step < 2) setStep(step + 1); else onDone(next); }, 220);
+  };
+  const back = () => step === 0 ? go('home') : setStep(step - 1);
+  return html`<section class="screen" key=${'q' + step}>
+    <${Bar} onBack=${back} title=${html`${mood.emoji} ${mood.label}`} />
+    <div class="progress">${[0, 1, 2].map(i => html`<i class=${i <= step ? 'on' : ''}></i>`)}</div>
+    ${step === 0 && html`
+      <h1 class="h1">How much suffering are we willing to tolerate?</h1>
+      <div class="opts mt">${SUFFERING.map(s => html`<button class=${'opt' + (sel.suffer === s.id ? ' sel' : '')} onClick=${() => choose('suffer', s.id)}><span class="e">${s.emoji}</span><b>${s.label}</b></button>`)}</div>`}
+    ${step === 1 && html`
+      <h1 class="h1">How much time do you have?</h1>
+      <div class="times mt">${TIMES.map(t => html`<button class=${'time' + (sel.time === t.id ? ' sel' : '')} onClick=${() => choose('time', t.id)}><b>${t.label}</b><span>${t.unit}</span></button>`)}</div>`}
+    ${step === 2 && html`
+      <h1 class="h1">Where are you?</h1>
+      <div class="places mt">${PLACES.map(p => html`<button class=${'opt' + (sel.place === p.id ? ' sel' : '')} onClick=${() => choose('place', p.id)}><span class="e">${p.emoji}</span><b>${p.label}</b></button>`)}</div>`}
+  </section>`;
+}
+
+/* ---------------- Feed (swipe deck) ---------------- */
+
+function Feed({ feed, idx, decide, reshuffle, go, sel }) {
+  const cards = feed.cards.slice(idx, idx + 3);
+  const n = feed.cards.length;
+  const pri = { sleep: 0, air: 1, rain: 1, heat: 1, good: 3 };
+  const shown = feed.notes.filter(x => x.kind !== 'steps').sort((a, b) => pri[a.kind] - pri[b.kind]).slice(0, 2);
+  const icon = { sleep: '😴', air: '🌫️', rain: '🌧️', heat: '🥵', good: '🌤️' };
+  return html`<section class="screen">
+    <${Bar} onBack=${() => go('home')} title=${n ? `Match ${Math.min(idx + 1, n)} of ${n}` : 'No matches'} />
+    ${shown.length > 0 && html`<div class="notes">${shown.map(n => html`<div class=${'note ' + (n.kind === 'good' ? 'sage' : 'lav')}>${icon[n.kind]}<span>${n.text}</span></div>`)}</div>`}
+    ${cards.length
+      ? html`<${Deck} key=${idx} cards=${cards} idx=${idx} decide=${decide} sel=${sel} />`
+      : html`<div class="stack" style="margin:auto 0;text-align:center">
+          <div style="font-size:64px">🤷</div>
+          <h2 class="h1">You’re picky today. Fair.</h2>
+          <p class="sub">Want a fresh batch, or should I trick you into moving instead?</p>
+          <button class="cta mt" onClick=${reshuffle}>Show me more</button>
+          <button class="ghost" onClick=${() => go('trick')}>Trick me</button>
+        </div>`}
+  </section>`;
+}
+
+function Deck({ cards, idx, decide, sel }) {
+  const [d, setD] = useState({ x: 0, y: 0, active: false });
+  const [leaving, setLeaving] = useState(null);
+  const start = useRef(null);
+  const top = cards[0];
+
+  const fly = (dir) => {
+    if (leaving) return;
+    setLeaving(dir);
+    setTimeout(() => decide(top, dir === 'yes'), 280);
+  };
+  const onDown = (e) => { if (leaving) return; start.current = { x: e.clientX, y: e.clientY }; e.currentTarget.setPointerCapture(e.pointerId); setD({ x: 0, y: 0, active: true }); };
+  const onMove = (e) => { if (!start.current) return; setD({ x: e.clientX - start.current.x, y: (e.clientY - start.current.y) * .4, active: true }); };
+  const onUp = () => {
+    if (!start.current) return; start.current = null;
+    if (d.x > 100) fly('yes'); else if (d.x < -100) fly('no'); else setD({ x: 0, y: 0, active: false });
+  };
+  useEffect(() => {
+    const k = (e) => { if (e.key === 'ArrowRight') fly('yes'); if (e.key === 'ArrowLeft') fly('no'); };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  });
+
+  const tx = leaving ? (leaving === 'yes' ? 520 : -520) : d.x;
+  const style = `transform: translate(${tx}px, ${d.y}px) rotate(${tx / 16}deg); transition: ${d.active && !leaving ? 'none' : 'transform .3s cubic-bezier(.2,.8,.2,1)'}`;
+  const yesO = Math.max(0, Math.min(1, tx / 100)), noO = Math.max(0, Math.min(1, -tx / 100));
+  const yesLbl = YES[idx % YES.length], noLbl = NO[idx % NO.length];
+
+  return html`
+    <div class="deck">
+      ${cards.slice(1).reverse().map((c, i, arr) => html`<div class=${'card c' + ((idx + arr.length - i) % 2) + (arr.length - i === 1 ? ' under' : ' under2')} aria-hidden="true">
+        <div class="big-e">${c.act.emoji}</div><h3>${c.act.title}</h3></div>`)}
+      <div class=${'card c' + (idx % 2)} style=${style} onPointerDown=${onDown} onPointerMove=${onMove} onPointerUp=${onUp} onPointerCancel=${onUp}>
+        <div class="stamp yes" style=${'opacity:' + yesO}>${yesLbl}</div>
+        <div class="stamp no" style=${'opacity:' + noO}>${noLbl}</div>
+        <div class="big-e">${top.act.emoji}</div>
+        ${top.act.moods.includes(sel.mood) && html`<p class="fitline">Good for ${byId(MOODS, sel.mood).emoji} ${byId(MOODS, sel.mood).label.toLowerCase()}</p>`}
+        <h3>“${top.act.title}.”</h3>
+        <p>${top.act.tagline}</p>
+        <div class="stats">
+          <span class="stat mono">⏱ ${top.mins} min</span>
+          <span class="stat">${placeEmoji(top.act, sel)}</span>
+          <span class="stat">Effort <${Effort} n=${top.act.effort} /> <span class="mono">${top.act.effort}/10</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="swipe-actions">
+      <button class="sa no" onClick=${() => fly('no')}>❌ ${noLbl}</button>
+      <button class="sa yes" onClick=${() => fly('yes')}>❤️ ${yesLbl}</button>
+    </div>
+    <p class="hint">Swipe, tap, or use ← → keys. Every swipe teaches MODO your taste.</p>`;
+}
+
+/* ---------------- Reveal ---------------- */
+
+function Reveal({ chosen, onStart, onBack, go }) {
+  const { act, mins, plan, why } = chosen;
+  const dots = useMemo(() => Array.from({ length: 16 }, (_, i) => ({ l: Math.random() * 100, d: Math.random() * .6, c: i % 2 ? 'var(--lav-deep)' : 'var(--sage-deep)', s: 6 + Math.random() * 8 })), [act.id]);
+  return html`<section class="screen">
+    <${Bar} onBack=${onBack} title="Matched" />
+    <div class="eyebrow mt-s">We found your move.</div>
+    <div class="reveal-card mt-s">
+      <div class="confetti" aria-hidden="true">${dots.map(p => html`<i style=${`position:absolute;top:-10px;left:${p.l}%;width:${p.s}px;height:${p.s}px;border-radius:${p.s > 10 ? '3px' : '50%'};background:${p.c};animation:fall 1.4s ${p.d}s cubic-bezier(.3,.6,.5,1) both`}></i>`)}</div>
+      <div style="font-size:56px;line-height:1">${act.emoji}</div>
+      <h2>${mins}-minute “${act.title}” session</h2>
+      <p class="why"><b>Why:</b> ${why}</p>
+      <ul class="plan">${plan.map(s => html`<li><span class="m">${s.min} min</span><span>${s.label}</span></li>`)}</ul>
+      <div class="trio">
+        <div><b>${act.after}</b><span>Mood after</span></div>
+        <div><b class="mono">${act.effort}/10</b><span>Effort</span></div>
+        <div><b class="mono">${mins}m</b><span>Commitment</span></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="cta" onClick=${onStart}>Let’s go</button>
+      <button class="ghost" onClick=${onBack}>Show me something else</button>
+    </div>
+    <style>@keyframes fall { from { transform: translateY(0) rotate(0); opacity: 1 } to { transform: translateY(420px) rotate(320deg); opacity: 0 } }</style>
+  </section>`;
+}
+
+/* ---------------- Session player ---------------- */
+
+function Session({ chosen, onDone, go, watch }) {
+  const { act, mins, plan } = chosen;
+  const total = mins * 60;
+  const [elapsed, setElapsed] = useState(0);
+  const [running, setRunning] = useState(true);
+  const [fast, setFast] = useState(false);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    let lock = null;
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => lock = l).catch(() => {}); } catch (e) {}
+    return () => { try { lock && lock.release(); } catch (e) {} };
+  }, []);
+
+  useEffect(() => {
+    if (!running) return;
+    let lastT = performance.now();
+    const id = setInterval(() => {
+      const now = performance.now(); const dt = (now - lastT) / 1000; lastT = now;
+      setElapsed(e => Math.min(total, e + dt * (fast ? 60 : 1)));
+    }, 200);
+    return () => clearInterval(id);
+  }, [running, fast]);
+
+  useEffect(() => { if (elapsed >= total && !doneRef.current) { doneRef.current = true; setTimeout(() => onDone(mins), 500); } }, [elapsed]);
+
+  let acc = 0, cur = 0;
+  const bounds = plan.map(s => { const b = { s: acc, e: acc + s.min * 60 }; acc += s.min * 60; return b; });
+  bounds.forEach((b, i) => { if (elapsed >= b.s) cur = i; });
+  const stepLeft = Math.max(0, bounds[cur].e - elapsed);
+  const mm = Math.floor(stepLeft / 60), ss = Math.floor(stepLeft % 60);
+  const R = 120, C = 2 * Math.PI * R;
+  const prog = elapsed / total;
+
+  return html`<section class="screen">
+    <${Bar} onBack=${() => go('reveal')} title=${`${act.emoji} ${act.title}`} />
+    <div class="steps-mini">${plan.map((s, i) => {
+      const b = bounds[i]; const f = Math.max(0, Math.min(1, (elapsed - b.s) / (b.e - b.s)));
+      return html`<i style=${`flex:${s.min}`}><span style=${`transform:scaleX(${f})`}></span></i>`;
+    })}</div>
+    <div class="ring">
+      <svg viewBox="0 0 280 280" aria-hidden="true">
+        <circle cx="140" cy="140" r=${R} fill="none" stroke="var(--line)" stroke-width="14" />
+        <circle cx="140" cy="140" r=${R} fill="none" stroke="url(#g)" stroke-width="14" stroke-linecap="round" stroke-dasharray=${C} stroke-dashoffset=${C * (1 - prog)} style="transition: stroke-dashoffset .25s linear" />
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--sage-deep)" /><stop offset="1" stop-color="var(--lav-deep)" /></linearGradient></defs>
+      </svg>
+      <div class="inner">
+        <span class="eyebrow">Step ${cur + 1} of ${plan.length}</span>
+        <span class="t">${mm}:${String(ss).padStart(2, '0')}</span>
+        <span class="small mono">${Math.floor(elapsed / 60)} of ${mins} min</span>
+      </div>
+    </div>
+    <div class="step-now"><b>${plan[cur].label}</b>
+      ${plan[cur + 1] && html`<p class="small mt-s">Next: ${plan[cur + 1].label}</p>`}
+    </div>
+    <ul class="plan-live">${plan.map((s, i) => html`<li class=${i < cur ? 'done' : i === cur ? 'now' : ''}><span>${i < cur ? '✓' : i === cur ? '▸' : '·'}</span><span>${s.label}</span><span class="m">${s.min}m</span></li>`)}</ul>
+    <div class="foot">
+      ${watch && watch.connected && html`<p class="small" style="text-align:center">❤️ Live heart rate would stream from your ${watch.name} here.</p>`}
+      <div class="row">
+        <button class="ghost" onClick=${() => setRunning(r => !r)}>${running ? 'Pause' : 'Resume'}</button>
+        <button class="cta" style="padding:14px" onClick=${() => { doneRef.current = true; onDone(Math.max(1, elapsed / 60)); }}>I’m done</button>
+      </div>
+      <button class="toggle" onClick=${() => setFast(f => !f)} aria-pressed=${fast}><span class=${'switch' + (fast ? ' on' : '')}></span> Demo speed (1 second = 1 minute)</button>
+    </div>
+  </section>`;
+}
+
+/* ---------------- After ---------------- */
+
+function After({ last, logAfter, onRefuel, go, history, watch, hideCals }) {
+  const [picked, setPicked] = useState(last.after || null);
+  const before = last.before ? byId(MOODS, last.before) : null;
+  const after = picked ? byId(AFTER_MOODS, picked) : null;
+  const withBefore = history.filter(h => h.before && h.after);
+  const better = withBefore.filter(h => (byId(AFTER_MOODS, h.after) || {}).v > (BEFORE_V[h.before] || 0)).length;
+
+  return html`<section class="screen">
+    <${Bar} onBack=${() => go('home')} title=${last.kind === 'trick' ? 'You moved. Technically.' : 'Session done'} />
+    ${!picked ? html`
+      <div class="mt" style="font-size:56px">${last.emoji}</div>
+      <h1 class="h1">${last.kind === 'trick' ? 'Look at you, not exercising.' : 'You did it.'}</h1>
+      <p class="sub">${last.mins} min of moving. Now the important part:</p>
+      ${last.photo && html`<div class="photo-proof"><img src=${last.photo} alt="Your photo from the walk" /></div>`}
+      <h2 class="h2 mt-l">How do you feel now?</h2>
+      <div class="afters mt">${AFTER_MOODS.map(m => html`<button class="opt" onClick=${() => { setPicked(m.id); logAfter(m.id); }}><span class="e">${m.emoji}</span><b>${m.label}</b></button>`)}</div>
+    ` : html`
+      ${before
+        ? html`<div class="shift" aria-label=${`${before.label} to ${after.label}`}><span>${before.emoji}</span><span class="arr">→</span><span>${after.emoji}</span></div>
+               <h1 class="h1" style="text-align:center">${after.v > (BEFORE_V[before.id] || 0) ? `From ${before.label.toLowerCase()} to ${after.label.toLowerCase()}.` : after.v === 0 ? 'Not every session is magic.' : `${after.label}. Nice.`}</h1>`
+        : html`<div class="shift">${after.emoji}</div><h1 class="h1" style="text-align:center">${after.label}. Told you.</h1>`}
+      <p class="sub" style="text-align:center">Moving lifted your mood <b>${better} of ${withBefore.length || 1}</b> times so far.</p>
+      <div class="trio mt">
+        <div style="background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)"><b class="mono">${last.mins}m</b><span>Moved</span></div>
+        <div style="background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)"><b class="mono">${hideCals ? '✓' : '~' + last.burned}</b><span>${hideCals ? 'Done' : 'kcal'}</span></div>
+        <div style="background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)"><b>${after.emoji}</b><span>Now</span></div>
+      </div>
+      ${watch && watch.connected && html`<p class="small mt" style="text-align:center">✓ Logged to ${watch.name} <span class="tag">demo</span></p>`}
+      <div class="window mt-l">
+        <div><div class="small">Refuel</div><div class="bignum">${hideCals ? 'Hungry?' : `~${last.burned} kcal out.`}</div><div class="small">${hideCals ? 'Show me what’s in your fridge.' : 'Hungry? Show me your fridge.'}</div></div>
+        <span style="font-size:40px">🧊</span>
+      </div>
+      <div class="foot">
+        <button class="cta lav" onClick=${onRefuel}>Refuel from my fridge</button>
+        <button class="ghost" onClick=${() => go('home')}>Not now</button>
+      </div>
+    `}
+  </section>`;
+}
+
+/* ---------------- Refuel ---------------- */
+
+function FridgeArt({ found }) {
+  // A hand-drawn hostel fridge. Each item gets a scan box once it's "found".
+  const items = [
+    ['egg', 70, 92, '🥚', 30], ['egg', 100, 92, '🥚', 30], ['egg', 130, 92, '🥚', 30],
+    ['milk', 236, 102, '🥛', 46], ['banana', 300, 96, '🍌', 40],
+    ['tomato', 60, 186, '🍅', 34], ['onion', 120, 188, '🧅', 34], ['paneer', 186, 188, '🧀', 38], ['curd', 262, 188, '🥣', 40],
+    ['bread', 92, 282, '🍞', 44], ['chilli', 176, 282, '🌶️', 30], ['coriander', 246, 282, '🌿', 38],
+  ];
+  const boxes = {};
+  items.forEach(([n, x, y, e, s]) => { const b = boxes[n] || { x1: 1e9, y1: 1e9, x2: 0, y2: 0 }; b.x1 = Math.min(b.x1, x - s / 2 - 6); b.y1 = Math.min(b.y1, y - s + 2); b.x2 = Math.max(b.x2, x + s / 2 + 6); b.y2 = Math.max(b.y2, y + 10); boxes[n] = b; });
+  return html`<svg viewBox="0 0 360 306" role="img" aria-label="Illustration of a small fridge with eggs, milk, bananas, tomatoes, onion, paneer, curd, bread, chillies and coriander">
+    <defs><radialGradient id="fl" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#FFFBEA" /><stop offset="1" stop-color="#DDE7E8" /></radialGradient></defs>
+    <rect x="0" y="0" width="360" height="306" fill="url(#fl)" />
+    <rect x="22" y="14" width="316" height="282" rx="16" fill="none" stroke="#B9C6C2" stroke-width="3" />
+    ${[118, 212].map(y => html`<rect x="30" y=${y} width="300" height="6" rx="3" fill="#C7D3D0" />`)}
+    <rect x="30" y="248" width="300" height="44" rx="10" fill="#E8EFEF" stroke="#C7D3D0" />
+    ${items.map(([n, x, y, e, s]) => html`<text x=${x} y=${y} font-size=${s} text-anchor="middle">${e}</text>`)}
+    ${Object.entries(boxes).map(([n, b]) => found.includes(n) && html`<g style="animation: pop .35s cubic-bezier(.3,1.6,.5,1) both; transform-origin: ${(b.x1 + b.x2) / 2}px ${(b.y1 + b.y2) / 2}px">
+      <rect x=${b.x1} y=${b.y1} width=${b.x2 - b.x1} height=${b.y2 - b.y1} rx="8" fill="none" stroke="#6A52C4" stroke-width="2.5" />
+      <rect x=${b.x1} y=${b.y1 - 15} width=${n.length * 7 + 12} height="15" rx="4" fill="#6A52C4" />
+      <text x=${b.x1 + 6} y=${b.y1 - 4} font-size="10.5" fill="#fff" font-family="DM Mono, monospace">${n}</text>
+    </g>`)}
+  </svg>`;
+}
+
+function ProfileForm({ initial, onSave, onSkip }) {
+  const [p, setP] = useState(initial || DEFAULT_PROFILE);
+  const Num = ({ k, step, unit, min, max }) => html`<div class="num">
+    <button onClick=${() => setP({ ...p, [k]: Math.max(min, p[k] - step) })} aria-label=${'Less ' + k}>−</button>
+    <output>${p[k]}<span class="small"> ${unit}</span></output>
+    <button onClick=${() => setP({ ...p, [k]: Math.min(max, p[k] + step) })} aria-label=${'More ' + k}>+</button></div>`;
+  return html`<div class="form mt">
+    <div class="field"><label>Body (for the calorie formula only)</label>
+      <div class="seg">${[['f', 'Female'], ['m', 'Male'], ['x', 'Rather not say']].map(([v, l]) => html`<button class=${p.sex === v ? 'sel' : ''} onClick=${() => setP({ ...p, sex: v })}>${l}</button>`)}</div></div>
+    <div class="grid2">
+      <div class="field"><label>Age</label><${Num} k="age" step=${1} unit="yrs" min=${14} max=${90} /></div>
+      <div class="field"><label>Weight</label><${Num} k="weight" step=${1} unit="kg" min=${30} max=${180} /></div>
+    </div>
+    <div class="field"><label>Height</label><${Num} k="height" step=${1} unit="cm" min=${120} max=${220} /></div>
+    <div class="field"><label>Most days you’re…</label>
+      <div class="seg">${[['low', 'Mostly sitting'], ['some', 'On my feet a bit'], ['very', 'Very active']].map(([v, l]) => html`<button class=${p.activity === v ? 'sel' : ''} onClick=${() => setP({ ...p, activity: v })}>${l}</button>`)}</div></div>
+    <button class="cta mt" onClick=${() => onSave(p)}>Save</button>
+    ${onSkip && html`<button class="ghost" onClick=${onSkip}>Skip, use an average</button>`}
+  </div>`;
+}
+
+function Refuel({ from, go, profile, setProfile, hideCals, setHideCals, aiMode, say }) {
+  const [phase, setPhase] = useState(profile ? 'pick' : 'profile');
+  const [have, setHave] = useState([]);
+  const [found, setFound] = useState([]);
+  const [photo, setPhoto] = useState(null);
+  const [source, setSource] = useState(null);
+  const [aiNote, setAiNote] = useState('');
+  const [typed, setTyped] = useState('');
+  const [open, setOpen] = useState(null);
+  const [special, setSpecial] = useState(null);
+  const [specialState, setSpecialState] = useState('idle');
+
+  const prof = profile || DEFAULT_PROFILE;
+  const burned = from ? from.burned : 0;
+  const win = mealWindow(prof, burned);
+  const recipes = useMemo(() => matchRecipes(have, win, !!from), [have.join(','), win.lo, !!from]);
+
+  const runSample = () => {
+    setSource('sample'); setPhoto(null); setFound([]); setPhase('scanning');
+    SAMPLE_FRIDGE.forEach((n, i) => setTimeout(() => setFound(f => [...f, n]), 450 + i * 210));
+    setTimeout(() => { setHave(SAMPLE_FRIDGE); setAiNote('Classic hostel fridge. Lots of protein hiding in there.'); setPhase('results'); }, 450 + SAMPLE_FRIDGE.length * 210 + 600);
+  };
+
+  const onPhoto = async (e) => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    e.target.value = '';
+    let url;
+    try { url = await shrinkImage(f); } catch (err) { say('Couldn’t read that photo. Try another?'); return; }
+    setPhoto(url); setSource('photo'); setFound([]); setPhase('scanning');
+    if (aiMode !== 'off' && AI.images) {
+      try {
+        const r = await AI.scanFridge(url);
+        if (r.items.length) { setHave(r.items); setAiNote(r.note); setPhase('results'); return; }
+      } catch (err) {}
+    }
+    setTimeout(() => setPhase('manual'), 1200);
+  };
+
+  const addTyped = () => {
+    const items = parseIngredients(typed); if (!items.length) return;
+    setHave(h => [...new Set([...h, ...items])]); setTyped('');
+    if (phase === 'pick') { setSource('typed'); setPhase('results'); }
+  };
+  const toggle = (n) => setHave(h => h.includes(n) ? h.filter(x => x !== n) : [...h, n]);
+
+  const askSpecial = async () => {
+    setSpecialState('loading');
+    try {
+      const r = await AI.chefSpecial(have, win, hideCals, from && from.title);
+      setSpecial(r); setSpecialState('done');
+    } catch (e) { setSpecialState('error'); }
+  };
+
+  const top = (html`<div class="row" style="align-items:center;justify-content:space-between">
+    <div><h1 class="h1" style="margin-bottom:0">What can I make?</h1></div>
+  </div>`);
+
+  const windowCard = html`<div class="window mt">
+    ${hideCals
+      ? html`<div><div class="small">${from ? 'After ' + from.title.toLowerCase() : 'Right now'}</div><div class="bignum">Protein + carbs</div><div class="small">Calories hidden. I’ll still keep portions sensible.</div></div>`
+      : html`<div><div class="small">Your meal window${from ? ` · after ~${burned} kcal out` : ''}</div><div class="bignum mono">${win.lo}–${win.hi}</div><div class="small">kcal · daily needs ~${win.tdee.toLocaleString('en-IN')}</div></div>`}
+    <button class="toggle" style="color:inherit;flex-direction:column;gap:4px" onClick=${() => setHideCals(!hideCals)} aria-pressed=${hideCals}><span class=${'switch' + (hideCals ? ' on' : '')}></span><span class="small">Hide calories</span></button>
+  </div>`;
+
+  return html`<section class="screen">
+    <${Bar} onBack=${() => phase === 'results' || phase === 'manual' ? setPhase('pick') : go(from ? 'after' : 'home')} title=${from ? 'Step 3 · Refuel' : 'Refuel'} />
+    ${phase === 'profile' && html`
+      <div class="eyebrow mt-s">Quick, just once</div>
+      <h1 class="h1">So I know how much food “enough” is.</h1>
+      <p class="sub">Used only to estimate your meal size. Stays on this device.</p>
+      <${ProfileForm} onSave=${(p) => { setProfile(p); setPhase('pick'); }} onSkip=${() => { setProfile(DEFAULT_PROFILE); setPhase('pick'); }} />`}
+
+    ${phase === 'pick' && html`
+      ${top}
+      <p class="sub mt-s">Show me what you’ve got. I’ll find something good to make with it.</p>
+      ${windowCard}
+      <div class="scan-opts mt">
+        <label class="scan-opt a"><span class="e">📷</span><b>Snap your fridge</b><span>${aiMode !== 'off' && AI.images ? 'AI reads the photo' : 'Photo + quick tap-through'}</span>
+          <input type="file" accept="image/*" capture="environment" onChange=${onPhoto} aria-label="Take or upload a fridge photo" /></label>
+        <button class="scan-opt b" onClick=${runSample}><span class="e">🧊</span><b>Try a sample fridge</b><span>A very hostel fridge</span></button>
+      </div>
+      <div class="field mt"><label for="typein">Or just type it</label>
+        <div class="textin"><input id="typein" placeholder="eggs, paneer, leftover dal…" value=${typed} onInput=${e => setTyped(e.target.value)} onKeyDown=${e => e.key === 'Enter' && addTyped()} /><button onClick=${addTyped}>Add</button></div>
+      </div>
+      <p class="small mt">Assumes salt, oil and basic masalas are around. Calorie numbers are estimates, not prescriptions.</p>`}
+
+    ${phase === 'scanning' && html`
+      ${top}
+      <div class="fridge-wrap mt">
+        ${source === 'sample' ? html`<${FridgeArt} found=${found} />` : html`<img src=${photo} alt="Your fridge photo" />`}
+        <div class="scanline"></div>
+      </div>
+      <p class="sub mt" style="text-align:center">${source === 'sample' ? `Spotted ${found.length} things…` : aiMode !== 'off' && AI.images ? 'Reading your fridge…' : 'Looking…'}</p>
+      <div class="chips mt-s" style="justify-content:center">${found.map(n => html`<span class="chip on">${ingEmoji(n)} ${n}</span>`)}</div>`}
+
+    ${phase === 'manual' && html`
+      ${top}
+      ${photo && html`<div class="fridge-wrap mt" style="aspect-ratio:16/7"><img src=${photo} alt="Your fridge photo" /></div>`}
+      <div class="note lav mt">👀<span>My AI eyes aren’t switched on in this version, so help me out: tap what’s in there.</span></div>
+      <div class="chips mt">${INGREDIENTS.map(([n, e]) => html`<button class=${'chip' + (have.includes(n) ? ' on' : '')} onClick=${() => toggle(n)} aria-pressed=${have.includes(n)}>${e} ${n}</button>`)}</div>
+      <div class="foot sticky"><button class="cta" disabled=${!have.length} onClick=${() => setPhase('results')}>Find recipes (${have.length})</button></div>`}
+
+    ${phase === 'results' && html`
+      ${top}
+      ${aiNote && html`<p class="sub mt-s">${aiNote}</p>`}
+      <div class="field mt"><label>In your fridge · tap to remove</label>
+        <div class="chips">${have.map(n => html`<button class="chip on" onClick=${() => toggle(n)} aria-label=${'Remove ' + n}>${ingEmoji(n)} ${n} <span class="x">✕</span></button>`)}</div>
+        <div class="textin mt-s"><input id="addmore" placeholder="Add something I missed" value=${typed} onInput=${e => setTyped(e.target.value)} onKeyDown=${e => e.key === 'Enter' && addTyped()} /><button onClick=${addTyped}>Add</button></div>
+      </div>
+      ${windowCard}
+      ${aiMode !== 'off' && html`<div class="mt">
+        ${specialState === 'idle' && html`<button class="ghost" onClick=${askSpecial}>✨ Ask MODO for a chef’s special</button>`}
+        ${specialState === 'loading' && html`<div class="note lav">✨<span>Inventing something with what you have…</span></div>`}
+        ${specialState === 'error' && html`<div class="note">🤔<span>The chef is busy. The recipes below still work.</span></div>`}
+        ${special && html`<div class="recipe special">
+          <button onClick=${() => setOpen(open === 'special' ? null : 'special')}>
+            <span class="re">${special.emoji || '✨'}</span>
+            <div><h4>${special.name}</h4><div class="meta"><span class="tag">AI special</span><span>${special.mins} min</span>${!hideCals && html`<span>~${special.kcal} kcal</span>`}<span>${special.protein}g protein</span></div></div>
+            <span>${open === 'special' ? '−' : '+'}</span></button>
+          ${open === 'special' && html`<div class="body"><p style="margin:0">${special.why}</p><ol>${(special.steps || []).map(s => html`<li>${s}</li>`)}</ol></div>`}
+        </div>`}
+      </div>`}
+      <h2 class="h2 mt-l">${recipes.length ? `You can make ${recipes.filter(r => !r.missing.length).length || 'almost'}${recipes.filter(r => !r.missing.length).length ? ' things' : ''}` : 'Hmm.'}</h2>
+      ${!recipes.length && html`<p class="sub mt-s">Not enough to cook with. Add a couple more things, or honestly, order dal-chawal.</p>`}
+      <div class="stack mt">${recipes.slice(0, 8).map(r => html`<div class="recipe">
+        <button onClick=${() => setOpen(open === r.id ? null : r.id)} aria-expanded=${open === r.id}>
+          <span class="re">${r.emoji}</span>
+          <div><h4>${r.name}</h4>
+            <div class="meta"><span>${r.mins} min</span>${!hideCals && html`<span>~${r.kcalS} kcal</span>`}<span>${r.proteinS}g protein</span>${r.servings > 1 && html`<span>1.5× portion</span>`}</div>
+            <div class="meta mt-s">${r.missing.length ? html`<span class="fit n">need ${r.missing[0]}</span>` : !hideCals && r.fits ? html`<span class="fit y">fits your window</span>` : html`<span class="fit y">you have it all</span>`}</div>
+          </div>
+          <span aria-hidden="true">${open === r.id ? '−' : '+'}</span>
+        </button>
+        ${open === r.id && html`<div class="body"><div class="small">Uses: ${r.used.join(', ')}</div><ol>${r.steps.map(s => html`<li>${s}</li>`)}</ol></div>`}
+      </div>`)}</div>
+      <div class="foot"><button class="ghost" onClick=${() => go('home')}>Done</button></div>`}
+  </section>`;
+}
+
+/* ---------------- Trick mode ---------------- */
+
+function Trick({ go, onAccept }) {
+  const order = useMemo(() => TRICKS.map((t, i) => [Math.random(), i]).sort((a, b) => a[0] - b[0]).map(x => x[1]), []);
+  const [i, setI] = useState(0);
+  const tr = TRICKS[order[i % order.length]];
+  const quip = i === 0 ? 'Let’s trick you into moving.' : i < 3 ? 'Okay, how about this.' : i < 6 ? 'You’re really committed to not committing.' : 'I respect the dedication. One more?';
+  return html`<section class="screen trick-screen">
+    <${Bar} onBack=${() => go('home')} />
+    <h1 class="h-hero" style="margin-top:6px">Fine.</h1>
+    <p class="sub">${quip}</p>
+    <div class="trick-card" key=${i}>
+      <span class="m">${tr.min} min</span>
+      <div class="e">${tr.emoji}</div>
+      <h2>${tr.text}</h2>
+      <p>${tr.sub}</p>
+    </div>
+    <p class="small mt">You’re not technically working out. You’re just doing something your body needs.</p>
+    <div class="foot">
+      <button class="cta" onClick=${() => onAccept(tr)}>Fine, I’ll do it</button>
+      <button class="ghost" onClick=${() => setI(i + 1)}>Nope, another one</button>
+    </div>
+  </section>`;
+}
+
+function TrickGo({ trick, onDone, go }) {
+  const total = trick.min * 60;
+  const [left, setLeft] = useState(total);
+  const [fast, setFast] = useState(false);
+  const [photo, setPhoto] = useState(null);
+  useEffect(() => {
+    let lastT = performance.now();
+    const id = setInterval(() => { const now = performance.now(); const dt = (now - lastT) / 1000; lastT = now; setLeft(l => Math.max(0, l - dt * (fast ? 60 : 1))); }, 200);
+    return () => clearInterval(id);
+  }, [fast]);
+  const mm = Math.floor(left / 60), ss = Math.floor(left % 60);
+  const onPhoto = async (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; try { setPhoto(await shrinkImage(f, 900)); } catch (err) {} };
+  return html`<section class="screen trick-screen">
+    <${Bar} onBack=${() => go('trick')} />
+    <div class="trick-card" style="margin-top:6px"><div class="e">${trick.emoji}</div><h2>${trick.text}</h2><p>${trick.sub}</p></div>
+    <div style="text-align:center" class="mt-l">
+      <div class="mono" style="font-size:64px;letter-spacing:-.04em;line-height:1">${mm}:${String(ss).padStart(2, '0')}</div>
+      <p class="small mt-s">${left > 0 ? 'Go. I’ll wait here.' : 'Time’s up. Did you do it?'}</p>
+    </div>
+    ${trick.photo && html`<label class="ghost mt" style="display:block;text-align:center;position:relative">📸 ${photo ? 'Change photo' : 'Send me your interesting thing'}<input type="file" accept="image/*" capture="environment" onChange=${onPhoto} style="position:absolute;inset:0;opacity:0" aria-label="Upload your photo" /></label>`}
+    ${photo && html`<div class="photo-proof"><img src=${photo} alt="Your photo" /></div>`}
+    <div class="foot">
+      <button class="cta" onClick=${() => onDone(trick, photo)}>Done. I moved.</button>
+      <button class="toggle" style="color:inherit" onClick=${() => setFast(f => !f)} aria-pressed=${fast}><span class=${'switch' + (fast ? ' on' : '')}></span> Demo speed</button>
+    </div>
+  </section>`;
+}
+
+/* ---------------- Me ---------------- */
+
+function Me({ go, taste, history, watch, setSheet, hideCals, setHideCals, profile, setProfile, reset, onRefuel }) {
+  const p = tasteProfile(taste);
+  const [editing, setEditing] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const withBefore = history.filter(h => h.before && h.after);
+  const better = withBefore.filter(h => (byId(AFTER_MOODS, h.after) || {}).v > (BEFORE_V[h.before] || 0)).length;
+  const list = (arr) => arr.map(x => x.label).join(', ');
+  return html`<section class="screen">
+    <${Bar} onBack=${() => go('home')} title="You" />
+    <h1 class="h1 mt-s">MODO knows you.</h1>
+    <p class="sub">${taste.swipes ? `Learned from ${taste.swipes} swipe${taste.swipes > 1 ? 's' : ''}. The more you swipe, the sharper this gets.` : 'Swipe on a few matches and I’ll start figuring you out.'}</p>
+    ${taste.swipes > 0 && html`<div class="taste mt">
+      ${p.hate.length > 0 && html`<div class="grp hate"><span class="eyebrow">You hate</span><b>${list(p.hate)}</b></div>`}
+      ${p.like.length > 0 && html`<div class="grp like"><span class="eyebrow">You like</span><b>${list(p.like)}</b></div>`}
+      ${p.tolerate.length > 0 && html`<div class="grp"><span class="eyebrow">You tolerate</span><b>${list(p.tolerate)}</b></div>`}
+      ${p.secret.length > 0 && html`<div class="grp secret"><span class="eyebrow">You secretly love</span><b>${list(p.secret)}</b></div>`}
+    </div>`}
+
+    <div class="section">
+      <h2 class="h2">Mood log</h2>
+      ${history.length
+        ? html`<p class="small">Moving lifted your mood ${better} of ${withBefore.length} times.</p>
+          <div class="hist">${history.slice(0, 8).map(h => html`<div>
+            <span class="em">${h.before ? byId(MOODS, h.before).emoji : '🙅'}→${(byId(AFTER_MOODS, h.after) || { emoji: '·' }).emoji}</span>
+            <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.title}</span>
+            <span class="small mono">${h.mins}m</span></div>`)}</div>`
+        : html`<p class="small">Nothing yet. Your before → after moods will show up here.</p>`}
+    </div>
+
+    <div class="section">
+      <h2 class="h2">Settings</h2>
+      <div class="list">
+        <button class="li" onClick=${() => setSheet('watch')}><span class="e">⌚</span>Watch<span class="r">${watch && watch.connected ? watch.name + ' · demo' : 'Not connected'}</span></button>
+        <button class="li" onClick=${() => setEditing(!editing)}><span class="e">📏</span>Body details<span class="r">${profile ? `${profile.weight} kg · ${profile.height} cm` : 'Not set'}</span></button>
+        ${editing && html`<${ProfileForm} initial=${profile} onSave=${(x) => { setProfile(x); setEditing(false); }} />`}
+        <button class="li" onClick=${() => setHideCals(!hideCals)} aria-pressed=${hideCals}><span class="e">🙈</span>Hide calorie numbers<span class="r"><span class=${'switch' + (hideCals ? ' on' : '')} style="display:inline-block"></span></span></button>
+        <button class="li" onClick=${onRefuel}><span class="e">🥗</span>Refuel from my fridge<span class="r">→</span></button>
+        ${confirmReset
+          ? html`<div class="row"><button class="ghost" onClick=${() => setConfirmReset(false)}>Keep it</button><button class="cta" style="padding:14px;background:var(--warn)" onClick=${() => { reset(); setConfirmReset(false); }}>Erase</button></div>`
+          : html`<button class="li" onClick=${() => setConfirmReset(true)}><span class="e">🧹</span>Reset everything<span class="r">taste, log, watch</span></button>`}
+      </div>
+      <p class="small">Everything stays in this browser. No account, no tracking.</p>
+    </div>
+  </section>`;
+}
+
+/* ---------------- Sheets ---------------- */
+
+function WatchSheet({ watch, setWatch, close, say }) {
+  const [phase, setPhase] = useState(watch && watch.connected ? 'connected' : 'pick');
+  const [which, setWhich] = useState(watch ? watch.id : null);
+  const connect = (w) => {
+    setWhich(w.id); setPhase('syncing');
+    setTimeout(() => { setWatch({ ...DEMO_WATCH, id: w.id, name: w.name, connected: true }); setPhase('connected'); say(`${w.name} connected (demo data)`); }, 1500);
+  };
+  const w = watch && watch.connected ? watch : null;
+  return html`<div class="scrim" onClick=${close}></div>
+    <div class="sheet" role="dialog" aria-label="Connect your watch">
+      <div class="grab"></div>
+      ${phase === 'pick' && html`
+        <h2 class="h1">Connect your watch</h2>
+        <p class="sub">Sleep, heart rate and steps shape what I suggest. Bad night? I go easy on you.</p>
+        <div class="list mt">${WATCHES.map(x => html`<button class="li" onClick=${() => connect(x)}><span class="e">${x.emoji}</span>${x.name}<span class="r">Connect →</span></button>`)}</div>
+        <div class="note mt">ℹ️<span>This web demo uses sample readings. A live sync needs the native app (Apple HealthKit, Garmin Connect, Fitbit and Health Connect APIs).</span></div>`}
+      ${phase === 'syncing' && html`<div style="text-align:center;padding:30px 0"><div class="spinner"></div><h2 class="h2">Syncing ${(byId(WATCHES, which) || {}).name}…</h2><p class="small">Pulling last night’s sleep and today’s steps</p></div>`}
+      ${phase === 'connected' && w && html`
+        <div class="row" style="align-items:center;justify-content:space-between"><h2 class="h1" style="margin:0">${w.name}</h2><span class="tag" style="flex:none">demo data</span></div>
+        <div class="readings mt">
+          <div><b class="mono">${fmtSleep(w.sleepMin)}</b><span>Sleep last night</span></div>
+          <div><b class="mono">${w.restingHr} bpm</b><span>Resting HR · ${w.restingHr - w.hrBaseline > 0 ? '+' : ''}${w.restingHr - w.hrBaseline} vs usual</span></div>
+          <div><b class="mono">${w.steps.toLocaleString('en-IN')}</b><span>Steps today</span></div>
+          <div><b class="mono">${w.hrv} ms</b><span>HRV · on the low side</span></div>
+        </div>
+        <div class="note sage mt">🧠<span><b>What I’m doing with this:</b> short sleep and a raised resting heart rate, so I’m capping effort at 6/10 today. Low steps, so even a walk counts.</span></div>
+        <div class="foot"><button class="cta" onClick=${close}>Done</button><button class="ghost" onClick=${() => { setWatch(null); setPhase('pick'); }}>Disconnect</button></div>`}
+    </div>`;
+}
+
+function ContextSheet({ cityId, setCityId, scenario, setScenario, weather, weatherState, close, setLive, setWeatherState }) {
+  const [locMsg, setLocMsg] = useState('');
+  const useHere = () => {
+    if (!navigator.geolocation) { setLocMsg('Location isn’t available here. Pick a city instead.'); return; }
+    setLocMsg('Finding you…');
+    navigator.geolocation.getCurrentPosition(pos => {
+      setScenario(null); setCityId('here'); setWeatherState('loading');
+      fetchWeather(pos.coords.latitude, pos.coords.longitude).then(w => { setLive({ ...w, place: 'Near you' }); setWeatherState('live'); setLocMsg(''); })
+        .catch(() => { setWeatherState('offline'); setLocMsg('Couldn’t load weather for your spot.'); });
+    }, () => setLocMsg('Location isn’t available here. Pick a city instead.'), { timeout: 8000 });
+  };
+  return html`<div class="scrim" onClick=${close}></div>
+    <div class="sheet" role="dialog" aria-label="Weather and air">
+      <div class="grab"></div>
+      <h2 class="h1">Outside right now</h2>
+      <p class="sub">${weather.place}: ${weather.temp}°, ${weatherWord(weather).toLowerCase()}, AQI ${weather.aqi} (${aqiWord(weather.aqi).toLowerCase()}). ${weatherState === 'live' && !scenario ? 'Live from Open-Meteo.' : 'Demo values.'}</p>
+      <div class="field mt"><label>Live weather for</label>
+        <div class="seg">${CITIES.map(c => html`<button class=${!scenario && cityId === c.id ? 'sel' : ''} onClick=${() => setCityId(c.id)}>${c.name}</button>`)}
+        <button class=${!scenario && cityId === 'here' ? 'sel' : ''} onClick=${useHere}>📍 Near me</button></div>
+        ${locMsg && html`<p class="small mt-s">${locMsg}</p>`}
+        ${weatherState === 'offline' && !scenario && html`<p class="small mt-s">Live weather couldn’t load here, so you’re seeing demo values.</p>`}
+      </div>
+      <div class="field mt"><label>Or simulate a day (for the demo)</label>
+        <div class="seg">${Object.entries(SCENARIOS).map(([k, s]) => html`<button class=${scenario === k ? 'sel' : ''} onClick=${() => setScenario(k)}>${s.label}</button>`)}</div>
+      </div>
+      <div class="note lav mt">🌫️<span>When the air is bad or it’s pouring and you could be anywhere, I nudge you indoors. If you’ve said you’re outside, I warn you and keep the effort sensible.</span></div>
+      <div class="foot"><button class="cta" onClick=${close}>Done</button></div>
+    </div>`;
+}
+
+render(html`<${App} />`, document.getElementById('app'));
+</script></body></html>
